@@ -4,6 +4,8 @@
 
 **World Pulse** is developed as a 4-member Advanced Web Technology (AWT) semester project. Work is distributed equally across core engineering pillars: Frontend UI & 3D, Backend API & Gateway, Data Collectors & Normalization, and Analytics & DevOps.
 
+**Team Lead:** Saumya (`saumy-a`) — repository owner, project coordination, issue prioritization, integration approval, and release sign-off.
+
 ---
 
 ## 👨‍💻 Member Roles & Task Breakdown

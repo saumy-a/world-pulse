@@ -118,6 +118,7 @@ world-pulse/
 
 ## 👥 Team Roles & Responsibilities
 
+- **Saumya (`saumy-a`) – Team Lead**: Repository owner, project coordination, issue prioritization, integration approval, and release sign-off.
 - **Member 1 – Frontend Lead**: Interactive Dashboard, Authentication UI, 3D Globe visualization, D3 charts, Search UI, Socket.IO Client.
 - **Member 2 – Backend Lead**: JWT Authentication, REST API Gateway, Prisma ORM, PostgreSQL queries, Redis caching, Socket.IO Server.
 - **Member 3 – Data Collectors Lead**: Ingestion workers (GitHub, Wikimedia, USGS, NASA, CoinGecko, News), Data Normalization & Geolocation enrichment pipeline.
