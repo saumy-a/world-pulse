@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=apps/web",
+    "dev": "npm run dev --workspaces",
     "dev:web": "npm run dev --workspace=apps/web",
     "dev:collectors": "npm run dev --workspace=apps/collectors",
     "dev:all": "npm run dev --workspaces",
