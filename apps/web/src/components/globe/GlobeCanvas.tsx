@@ -93,9 +93,13 @@ export const GlobeCanvas = memo(() => {
     // 3. OrbitControls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.minDistance = 6.0;
-    controls.maxDistance = 24;
+    controls.dampingFactor = 0.08;
+    controls.rotateSpeed = 0.85;
+    controls.zoomSpeed = 1.2;
+    controls.panSpeed = 0.8;
+    controls.enablePan = true;
+    controls.minDistance = 5.3;
+    controls.maxDistance = 35;
     controls.autoRotate = autoRotate;
     controls.autoRotateSpeed = 0.55;
     controlsRef.current = controls;
@@ -187,10 +191,17 @@ export const GlobeCanvas = memo(() => {
     scene.add(arcsGroup);
     arcsGroupRef.current = arcsGroup;
 
-    // 9. Pointer Raycasting
+    // 9. Pointer Raycasting & Interaction Drag Detection
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     let lastRaycastTime = 0;
+    let mouseDownPos = { x: 0, y: 0 };
+    let hasDragged = false;
+
+    const handlePointerDown = (evt: MouseEvent) => {
+      mouseDownPos = { x: evt.clientX, y: evt.clientY };
+      hasDragged = false;
+    };
 
     const handlePointerMove = (evt: MouseEvent) => {
       const now = performance.now();
@@ -199,6 +210,9 @@ export const GlobeCanvas = memo(() => {
       lastRaycastTime = now;
 
       const rect = renderer.domElement.getBoundingClientRect();
+      if (Math.hypot(evt.clientX - mouseDownPos.x, evt.clientY - mouseDownPos.y) > 6) {
+        hasDragged = true;
+      }
       pointer.x = ((evt.clientX - rect.left) / rect.width) * 2 - 1;
       pointer.y = -((evt.clientY - rect.top) / rect.height) * 2 + 1;
 
@@ -239,6 +253,8 @@ export const GlobeCanvas = memo(() => {
     };
 
     const handleClick = () => {
+      // Don't trigger incident selection if user was rotating/panning the globe
+      if (hasDragged) return;
       raycaster.setFromCamera(pointer, camera);
       const intersects = raycaster.intersectObjects(markersGroup.children, true);
       if (intersects.length > 0) {
@@ -252,6 +268,7 @@ export const GlobeCanvas = memo(() => {
       }
     };
 
+    renderer.domElement.addEventListener('mousedown', handlePointerDown);
     renderer.domElement.addEventListener('mousemove', handlePointerMove);
     renderer.domElement.addEventListener('click', handleClick);
 
@@ -301,6 +318,7 @@ export const GlobeCanvas = memo(() => {
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
+      renderer.domElement.removeEventListener('mousedown', handlePointerDown);
       renderer.domElement.removeEventListener('mousemove', handlePointerMove);
       renderer.domElement.removeEventListener('click', handleClick);
       renderer.dispose();

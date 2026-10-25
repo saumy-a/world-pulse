@@ -20,6 +20,7 @@ const AiIntelligenceBriefing = lazy(() => import('./components/ai/AiIntelligence
 const AnalyticsModal = lazy(() => import('./components/analytics/AnalyticsModal').then(m => ({ default: m.AnalyticsModal })));
 const AuthModal = lazy(() => import('./components/auth/AuthModal').then(m => ({ default: m.AuthModal })));
 const BookmarksModal = lazy(() => import('./components/bookmarks/BookmarksModal').then(m => ({ default: m.BookmarksModal })));
+const AdminDashboardModal = lazy(() => import('./components/admin/AdminDashboardModal').then(m => ({ default: m.AdminDashboardModal })));
 
 const STORAGE_BOOKMARKS = 'worldpulse_bookmarks';
 
@@ -31,6 +32,7 @@ export function App() {
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [activeToastEvent, setActiveToastEvent] = useState<WorldEvent | null>(null);
 
   // Load persistent bookmarks
@@ -123,6 +125,8 @@ export function App() {
         onToggleAnalyticsModal={() => setIsAnalyticsModalOpen(true)}
         onToggleAuthModal={() => setIsAuthOpen(true)}
         onToggleBookmarksModal={() => setIsBookmarksOpen(true)}
+        onToggleAdminModal={() => setIsAdminOpen(true)}
+        isAdminOpen={isAdminOpen}
         bookmarkCount={bookmarkedIds.length}
       />
 
@@ -169,6 +173,9 @@ export function App() {
             onClose={() => setIsBookmarksOpen(false)}
           />
         )}
+
+        {/* Dedicated Admin Command & Control Modal */}
+        {isAdminOpen && <AdminDashboardModal onClose={() => setIsAdminOpen(false)} />}
       </Suspense>
 
       {/* Real-time High-Severity Notification Toast */}

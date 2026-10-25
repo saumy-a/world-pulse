@@ -29,6 +29,8 @@ interface TopNavProps {
   onToggleAnalyticsModal: () => void;
   onToggleAuthModal: () => void;
   onToggleBookmarksModal: () => void;
+  onToggleAdminModal?: () => void;
+  isAdminOpen?: boolean;
   bookmarkCount: number;
 }
 
@@ -44,6 +46,8 @@ export const TopNav: FC<TopNavProps> = ({
   onToggleAnalyticsModal: _onToggleAnalyticsModal,
   onToggleAuthModal,
   onToggleBookmarksModal,
+  onToggleAdminModal,
+  isAdminOpen = false,
   bookmarkCount,
 }) => {
   const [utcTime, setUtcTime] = useState('');
@@ -221,6 +225,21 @@ export const TopNav: FC<TopNavProps> = ({
               </span>
             )}
           </button>
+
+          {/* Admin Command Console Toggle */}
+          {onToggleAdminModal && (
+            <button
+              onClick={onToggleAdminModal}
+              title="Admin Command & Control Console"
+              className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                isAdminOpen
+                  ? 'bg-rose-500/20 border-rose-400 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.3)]'
+                  : 'bg-slate-950/70 border-white/10 text-slate-400 hover:text-rose-300'
+              }`}
+            >
+              <Shield className="w-4 h-4 text-rose-400" />
+            </button>
+          )}
 
           <button
             onClick={onToggleAuthModal}
