@@ -7,7 +7,7 @@ import { createProceduralGlobeTexture } from './textureGenerator';
 import { createAtmosphereMaterial } from './AtmosphereShader';
 import { GlobeControls } from './GlobeControls';
 import type { WorldEvent } from '../../types';
-import { Compass, RotateCw, ZoomIn, ZoomOut, Target, Map } from 'lucide-react';
+import { Compass, RotateCw, ZoomIn, ZoomOut, Target, Map, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
 
 const GLOBE_RADIUS = 5.0;
 
@@ -530,12 +530,59 @@ export const GlobeCanvas = memo(() => {
     controlsRef.current.update();
   }, []);
 
+  // Turn globe horizontally (left / right) or vertically (up / down) by angle in radians
+  const handleTurn = useCallback((horizontalRad: number, verticalRad = 0) => {
+    const controls = controlsRef.current;
+    if (!controls) return;
+    // Orbit around Y axis (azimuthal / longitude)
+    if (horizontalRad !== 0) {
+      const angle = controls.getAzimuthalAngle();
+      controls.minAzimuthAngle = -Infinity;
+      controls.maxAzimuthAngle = Infinity;
+      controls.setAzimuthalAngle(angle + horizontalRad);
+    }
+    // Orbit vertically (polar / latitude)
+    if (verticalRad !== 0) {
+      const polar = controls.getPolarAngle();
+      controls.setPolarAngle(Math.max(0.1, Math.min(Math.PI - 0.1, polar + verticalRad)));
+    }
+    controls.update();
+  }, []);
+
   const resetView = useCallback(() => {
     if (!cameraRef.current || !controlsRef.current) return;
     cameraRef.current.position.set(0, 3.5, 14.5);
     controlsRef.current.target.set(0, 0, 0);
     controlsRef.current.update();
   }, []);
+
+  // Keyboard arrows to turn the globe freely
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if user is typing in an input or textarea
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
+        return;
+      }
+
+      const turnStep = 0.2; // radians (~11.5 deg per press)
+      if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') {
+        handleTurn(-turnStep, 0);
+      } else if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') {
+        handleTurn(turnStep, 0);
+      } else if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') {
+        handleTurn(0, -turnStep);
+      } else if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') {
+        handleTurn(0, turnStep);
+      } else if (e.key === '+' || e.key === '=') {
+        handleZoom(2.0);
+      } else if (e.key === '-' || e.key === '_') {
+        handleZoom(-2.0);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleTurn, handleZoom]);
 
   return (
     <div className="relative w-full h-full overflow-hidden select-none bg-[#02050e]">
@@ -609,6 +656,42 @@ export const GlobeCanvas = memo(() => {
         >
           <RotateCw className={`w-3.5 h-3.5 ${autoRotate ? 'animate-spin' : ''}`} style={{ animationDuration: '9s' }} />
         </button>
+
+        {/* Rotate Left & Right Buttons */}
+        <div className="flex gap-1">
+          <button
+            onClick={() => handleTurn(-0.35, 0)}
+            title="Turn Globe Left (← / A)"
+            className="flex-1 p-2 rounded bg-slate-950/80 border border-slate-800 text-slate-300 hover:text-cyan-300 hover:border-cyan-500/50 backdrop-blur-xl transition-all cursor-pointer flex items-center justify-center"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => handleTurn(0.35, 0)}
+            title="Turn Globe Right (→ / D)"
+            className="flex-1 p-2 rounded bg-slate-950/80 border border-slate-800 text-slate-300 hover:text-cyan-300 hover:border-cyan-500/50 backdrop-blur-xl transition-all cursor-pointer flex items-center justify-center"
+          >
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Rotate Up & Down Buttons */}
+        <div className="flex gap-1">
+          <button
+            onClick={() => handleTurn(0, -0.25)}
+            title="Tilt Globe Up (↑ / W)"
+            className="flex-1 p-2 rounded bg-slate-950/80 border border-slate-800 text-slate-300 hover:text-cyan-300 hover:border-cyan-500/50 backdrop-blur-xl transition-all cursor-pointer flex items-center justify-center"
+          >
+            <ChevronUp className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => handleTurn(0, 0.25)}
+            title="Tilt Globe Down (↓ / S)"
+            className="flex-1 p-2 rounded bg-slate-950/80 border border-slate-800 text-slate-300 hover:text-cyan-300 hover:border-cyan-500/50 backdrop-blur-xl transition-all cursor-pointer flex items-center justify-center"
+          >
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+        </div>
 
         <button
           onClick={() => handleZoom(2.0)}
