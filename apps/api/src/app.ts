@@ -26,4 +26,9 @@ app.get("/api/v1/health", (_req, res) => {
     });
 });
 
+// Short health check, as listed in issue #4
+app.get("/health", (_req, res) => {
+    res.json({ status: "ok" });
+});
+
 export default app;
