@@ -1,0 +1,17 @@
+{
+    "name": "@world-pulse/api",
+    "version": "0.1.0",
+    "private": true,
+    "description": "World Pulse API - Express REST API backed by MongoDB",
+    "main": "dist/server.js",
+    "scripts": {
+        "dev": "ts-node src/server.ts",
+        "build": "tsc -p tsconfig.json",
+        "start": "node dist/server.js",
+        "test": "echo \"No tests yet\"",
+        "lint": "tsc -p tsconfig.json --noEmit"
+    },
+    "dependencies": {
+        "@world-pulse/shared-types": "*"
+    }
+}
