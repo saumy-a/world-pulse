@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import eventsRouter from "./routes/events";
 
 const app = express();
 
@@ -30,5 +31,8 @@ app.get("/api/v1/health", (_req, res) => {
 app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
 });
+
+// Events API
+app.use("/api/v1/events", eventsRouter);
 
 export default app;
