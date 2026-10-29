@@ -7,6 +7,9 @@ import { collect as collectNASA } from "./collectors/nasa";
 import { collect as collectNews } from "./collectors/news";
 import { collect as collectCoinGecko } from "./collectors/coingecko";
 import { collect as collectWikimedia } from "./collectors/wikimedia";
+import { collect as collectWeather } from "./collectors/weather";
+import { collect as collectLaunches } from "./collectors/launch-library";
+import { collect as collectHackerNews } from "./collectors/hacker-news";
 
 import type { WorldEvent } from "@world-pulse/shared-types";
 
@@ -33,6 +36,9 @@ const collectors: Collector[] = [
   { name: "news", collect: collectNews },
   { name: "coingecko", collect: collectCoinGecko },
   { name: "wikimedia", collect: collectWikimedia },
+  { name: "weather", collect: collectWeather },
+  { name: "launch-library", collect: collectLaunches },
+  { name: "hacker-news", collect: collectHackerNews },
 ];
 
 // ─── Run all collectors ───────────────────────────────────────────────────────
