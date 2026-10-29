@@ -1,27 +1,35 @@
 /* ============================================================
    POWER UP — in-app key setup (dev server only, src/keySetup.js)
    Same voice as the first-run launcher: glass card, cyan trim,
-   mono kickers. The chip retires once every key is configured.
+   mono kickers. The edge tab stays available for later key changes.
    ============================================================ */
 
-/* The chip sits in the bottom-right corner row (#corner-actions,
-   locale-picker.css), which owns the position. */
+/* Compact edge tab for provider settings. The label slides out on hover/focus. */
 #key-setup-chip {
+  position: fixed;
+  z-index: 151;
+  inset-inline-end: 0;
+  inset-block-end: 6.6rem;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.7rem;
+  justify-content: flex-start;
+  gap: 0.45rem;
+  width: 3rem;
+  height: 2.65rem;
+  padding: 0 0.7rem;
+  overflow: hidden;
   color: rgba(225, 244, 248, 0.92);
   font-family: var(--font-mono);
   font-size: 0.6rem;
   letter-spacing: 0.09rem;
+  white-space: nowrap;
   background: linear-gradient(
     145deg,
     rgba(10, 27, 37, 0.92),
     rgba(7, 13, 22, 0.9)
   );
   border: 1px solid rgba(54, 220, 255, 0.38);
-  border-radius: 0.42rem;
+  border-radius: 0.55rem 0 0 0.55rem;
   box-shadow:
     0 0.4rem 1.6rem rgba(0, 0, 0, 0.5),
     0 0 1.2rem rgba(0, 212, 255, 0.07);
@@ -31,7 +39,8 @@
   transition:
     border-color var(--transition-fast),
     background var(--transition-fast),
-    transform var(--transition-fast);
+    transform var(--transition-fast),
+    width 220ms ease;
 }
 
 #key-setup-chip:hover,
@@ -43,12 +52,36 @@
   );
   border-color: rgba(54, 220, 255, 0.7);
   outline: none;
-  transform: translateY(-1px);
+  width: 6.4rem;
+  transform: translateX(-2px);
 }
 
 #key-setup-chip .material-symbols-outlined {
   color: #55dff5;
   font-size: 0.95rem;
+  flex: 0 0 auto;
+}
+
+#key-setup-chip [data-key-setup-chip-label] {
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition:
+    max-width 220ms ease,
+    opacity 160ms ease;
+}
+
+#key-setup-chip:hover [data-key-setup-chip-label],
+#key-setup-chip:focus-visible [data-key-setup-chip-label] {
+  max-width: 3rem;
+  opacity: 1;
+}
+
+.key-setup-slide-arrow {
+  margin-inline-start: auto;
+  color: #55dff5;
+  font-size: 1rem;
+  line-height: 1;
 }
 
 #key-setup-chip[hidden] {

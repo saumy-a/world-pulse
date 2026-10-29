@@ -315,7 +315,6 @@ export async function initKeySetup({
   }
 
   const rowsHost = root.querySelector('[data-key-setup-rows]');
-  disposePlacement = bindKeySetupPlacement(documentRef, chip);
   const applyButton = root.querySelector('[data-key-setup-apply]');
   const closeButton = root.querySelector('[data-key-setup-close]');
   const chipLabel = chip.querySelector('[data-key-setup-chip-label]') || chip;
@@ -327,14 +326,14 @@ export async function initKeySetup({
   const render = (nextStatus) => {
     if (disposed) return;
     status = nextStatus;
-    chipLabel.textContent = keySetupChipLabel(status);
+    chipLabel.textContent = t('SETUP');
     chip.title = t('Project keys: {status}', {
       status: keySetupChipLabel(status),
     });
     chip.setAttribute('aria-label', chip.title);
-    // Fully powered is the owner's clean screen: the chip retires. The dialog
-    // stays reachable this session (and via ?setup=1) to swap or verify keys.
-    chip.hidden = status.setCount >= status.total;
+    // Keep settings reachable after setup; the edge tab stays compact until
+    // hovered, focused, or opened with a tap.
+    chip.hidden = false;
     if (!rowsHost) return;
     rowsHost.textContent = '';
     for (const key of status.keys || [])

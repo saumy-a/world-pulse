@@ -298,6 +298,105 @@
   border-bottom: 0;
 }
 
+/* Keep collapsed rail disclosure controls inside their cards. Long labels and
+   optional header actions must yield space to the arrow instead of squeezing
+   or pushing it beyond the rounded frame. */
+:root[data-ui-theme='cyber']
+  #right-context-rail
+  :is(
+    #cctv-panel,
+    #weather-panel,
+    #recent-imagery-panel,
+    #street-level-panel,
+    #global-context-panel
+  ).collapsed
+  > :is(
+    .cctv-panel-inner,
+    .weather-panel-inner,
+    .recent-imagery-panel-inner,
+    .street-level-panel-inner,
+    .global-context-panel-inner
+  )
+  > .panel-header {
+  gap: 6px;
+  padding-right: 8px;
+  padding-left: 10px;
+  overflow: hidden;
+}
+
+:root[data-ui-theme='cyber']
+  #right-context-rail
+  :is(
+    #cctv-panel,
+    #weather-panel,
+    #recent-imagery-panel,
+    #street-level-panel,
+    #global-context-panel
+  ).collapsed
+  .panel-header
+  > .panel-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:root[data-ui-theme='cyber']
+  #right-context-rail
+  :is(
+    #cctv-panel,
+    #weather-panel,
+    #recent-imagery-panel,
+    #street-level-panel,
+    #global-context-panel
+  ).collapsed
+  .panel-header
+  > .panel-collapse-btn {
+  box-sizing: border-box;
+  flex: 0 0 26px;
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+  margin-left: auto;
+  padding: 0;
+  line-height: 1;
+}
+
+:root[data-ui-theme='cyber']
+  #right-context-rail
+  #street-level-panel.collapsed
+  .panel-header
+  > #sl-status {
+  display: none;
+}
+
+:root[data-ui-theme='cyber'] #right-context-rail > #pp-toggles.collapsed {
+  --right-display-collapsed-width: var(--cyber-panel-collapsed-width);
+}
+
+:root[data-ui-theme='cyber']
+  #right-context-rail
+  > #pp-toggles.collapsed
+  > .pp-header-row {
+  gap: 8px;
+  padding-right: 10px;
+  padding-left: 14px;
+}
+
+:root[data-ui-theme='cyber']
+  #right-context-rail
+  > #pp-toggles.collapsed
+  > .pp-header-row
+  > .pp-collapse-btn {
+  box-sizing: border-box;
+  flex: 0 0 26px;
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+  line-height: 1;
+}
+
 :root[data-ui-theme='cyber']
   :is(
     .data-panel-inner,

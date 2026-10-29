@@ -1,5 +1,12 @@
 const LAYER_ID = 'world-pulse-events';
 const BOOKMARKS_KEY = 'world-pulse:event-bookmarks:v1';
+const WEATHER_LAYER_IDS = Object.freeze([
+  'weather-radar',
+  'weather-satellite',
+  'weather-lightning',
+  'weather-cyclones',
+  'wind',
+]);
 const CATEGORIES = [
   'all', 'technology', 'geopolitics', 'natural', 'weather', 'finance', 'space', 'news', 'other',
 ];
@@ -91,6 +98,8 @@ export function mountWorldPulseEventsPanel({ dataManager, catalog, viewer }) {
   container.append(root);
 
   let savedIds = new Set();
+  let weatherActivationMessage = '';
+  let weatherMessageTimer = null;
   try {
     const stored = JSON.parse(localStorage.getItem(BOOKMARKS_KEY) || '[]');
     if (Array.isArray(stored)) savedIds = new Set(stored.filter((id) => typeof id === 'string'));
@@ -106,7 +115,7 @@ export function mountWorldPulseEventsPanel({ dataManager, catalog, viewer }) {
     toggle.textContent = isEnabled ? 'LAYER ON' : 'LOAD EVENTS';
     toggle.setAttribute('aria-pressed', String(isEnabled));
     count.textContent = `${events.length}${stats.total === events.length ? '' : ` / ${stats.total}`}`;
-    status.textContent = stats.error
+    const feedStatus = stats.error
       ? stats.error
       : stats.lastUpdate
         ? stats.replayProgress < 100
@@ -115,6 +124,9 @@ export function mountWorldPulseEventsPanel({ dataManager, catalog, viewer }) {
         : isEnabled
           ? 'Connecting to World Pulse API…'
           : 'Enable the layer to load events.';
+    status.textContent = [weatherActivationMessage, feedStatus]
+      .filter(Boolean)
+      .join(' · ');
 
     list.replaceChildren();
     if (events.length === 0 && !stats.error && isEnabled) {
@@ -171,8 +183,39 @@ export function mountWorldPulseEventsPanel({ dataManager, catalog, viewer }) {
       savedIds,
     });
   };
+
+  const activateWeatherLayers = async () => {
+    weatherActivationMessage = 'Turning on weather overlays…';
+    render();
+    const results = await Promise.allSettled(
+      WEATHER_LAYER_IDS.map((id) =>
+        dataManager.setEnabled(id, true, { origin: 'user' }),
+      ),
+    );
+    const unavailable = WEATHER_LAYER_IDS.filter(
+      (id, index) =>
+        results[index].status === 'rejected' ||
+        dataManager.getLayerLifecycleState(id)?.enabled !== true,
+    );
+    weatherActivationMessage = unavailable.length
+      ? `Could not enable: ${unavailable.join(', ')}`
+      : 'Weather overlays turned on.';
+    render();
+    clearTimeout(weatherMessageTimer);
+    weatherMessageTimer = setTimeout(() => {
+      weatherActivationMessage = '';
+      render();
+    }, 6000);
+  };
+
   search.addEventListener('input', applyFilters);
-  category.addEventListener('change', applyFilters);
+  category.addEventListener('change', () => {
+    applyFilters();
+    clearTimeout(weatherMessageTimer);
+    weatherActivationMessage = '';
+    if (category.value === 'weather') void activateWeatherLayers();
+    else render();
+  });
   importance.addEventListener('input', applyFilters);
   savedOnly.addEventListener('change', applyFilters);
   let replayTimer = null;
@@ -224,6 +267,7 @@ export function mountWorldPulseEventsPanel({ dataManager, catalog, viewer }) {
 
   const cleanup = () => {
     clearTimeout(replayTimer);
+    clearTimeout(weatherMessageTimer);
     clearInterval(overviewTimer);
     overviewController?.abort();
     unsubscribeLayer();
