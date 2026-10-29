@@ -1,3 +1,5 @@
+import { recordClientDiagnostic } from '../../data/diagnostics.js';
+
 const DEFAULT_API_URL = 'http://localhost:5000';
 const MAX_EVENTS = 100;
 
@@ -56,37 +58,85 @@ export function createWorldPulseEventsSource({
   return Object.freeze({
     label: 'World Pulse API',
     async getSnapshot({ signal, sinceHours = 24, before = null } = {}) {
+      const startedAt = performance.now();
       const url = new URL(endpoint);
       url.searchParams.set('page', '1');
       url.searchParams.set('limit', String(MAX_EVENTS));
       url.searchParams.set('sinceHours', String(sinceHours));
       if (before) url.searchParams.set('before', new Date(before).toISOString());
-      const response = await fetchImpl(url, {
-        signal,
-        headers: { Accept: 'application/json' },
-        redirect: 'error',
-      });
-      if (!response.ok)
-        throw new Error(`World Pulse API unavailable (${response.status})`);
-      const payload = await response.json();
-      if (payload?.success !== true || !Array.isArray(payload.data))
-        throw new Error('World Pulse API returned an invalid event feed');
-      return payload.data
-        .slice(0, MAX_EVENTS)
-        .map(normalizeEvent)
-        .filter(Boolean);
+      try {
+        const response = await fetchImpl(url, {
+          signal,
+          headers: { Accept: 'application/json' },
+          redirect: 'error',
+        });
+        if (!response.ok) {
+          const error = new Error(`World Pulse API unavailable (${response.status})`);
+          error.statusCode = response.status;
+          throw error;
+        }
+        const payload = await response.json();
+        if (payload?.success !== true || !Array.isArray(payload.data))
+          throw new Error('World Pulse API returned an invalid event feed');
+        recordClientDiagnostic({
+          action: 'api_request_succeeded',
+          source: 'world-pulse-events-api',
+          durationMs: performance.now() - startedAt,
+          resultCount: payload.data.length,
+          statusCode: response.status,
+        });
+        return payload.data
+          .slice(0, MAX_EVENTS)
+          .map(normalizeEvent)
+          .filter(Boolean);
+      } catch (error) {
+        if (error?.name !== 'AbortError') {
+          recordClientDiagnostic({
+            action: 'api_request_failed',
+            source: 'world-pulse-events-api',
+            durationMs: performance.now() - startedAt,
+            statusCode: error?.statusCode,
+            errorCode: error?.code || error?.name || 'request_failed',
+          });
+        }
+        throw error;
+      }
     },
     async getOverview({ signal } = {}) {
-      const response = await fetchImpl(analyticsEndpoint, {
-        signal,
-        headers: { Accept: 'application/json' },
-        redirect: 'error',
-      });
-      if (!response.ok) throw new Error(`World Pulse analytics unavailable (${response.status})`);
-      const payload = await response.json();
-      if (payload?.success !== true || !payload.data || typeof payload.data !== 'object')
-        throw new Error('World Pulse API returned invalid analytics');
-      return payload.data;
+      const startedAt = performance.now();
+      try {
+        const response = await fetchImpl(analyticsEndpoint, {
+          signal,
+          headers: { Accept: 'application/json' },
+          redirect: 'error',
+        });
+        if (!response.ok) {
+          const error = new Error(`World Pulse analytics unavailable (${response.status})`);
+          error.statusCode = response.status;
+          throw error;
+        }
+        const payload = await response.json();
+        if (payload?.success !== true || !payload.data || typeof payload.data !== 'object')
+          throw new Error('World Pulse API returned invalid analytics');
+        recordClientDiagnostic({
+          action: 'api_request_succeeded',
+          source: 'world-pulse-analytics-api',
+          durationMs: performance.now() - startedAt,
+          statusCode: response.status,
+        });
+        return payload.data;
+      } catch (error) {
+        if (error?.name !== 'AbortError') {
+          recordClientDiagnostic({
+            action: 'api_request_failed',
+            source: 'world-pulse-analytics-api',
+            durationMs: performance.now() - startedAt,
+            statusCode: error?.statusCode,
+            errorCode: error?.code || error?.name || 'request_failed',
+          });
+        }
+        throw error;
+      }
     },
   });
 }
