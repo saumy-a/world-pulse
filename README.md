@@ -2,7 +2,7 @@
 
 World Pulse collects public events, stores them in MongoDB, and displays them on an interactive globe. The repository contains the globe web app, a REST API, and scheduled data collectors.
 
-The globe builds on the MIT-licensed [God's Eye View](apps/web/LICENSE) project. Its existing aircraft, satellite, weather, and camera layers remain available alongside World Pulse events.
+In The globe you can find aircraft, satellite, weather, and camera layers remain available alongside World Pulse events.
 
 ## What works today
 
