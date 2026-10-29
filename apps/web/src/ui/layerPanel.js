@@ -44,7 +44,6 @@ const PANEL_GROUPS = [
       'satellites',
       'flights',
       'military',
-      'local-adsb',
       'ais-live-vessels',
       'traffic',
       'transit',
@@ -53,12 +52,11 @@ const PANEL_GROUPS = [
   },
   {
     label: msg('Cameras'),
-    ids: ['cctv', 'recent-imagery', 'street-level'],
+    ids: ['cctv'],
   },
   {
     label: msg('Infrastructure'),
     ids: [
-      'alpr-cameras',
       'military-installations',
       'local-datacenters',
       'telegeography-submarine-cables',
@@ -70,7 +68,6 @@ const PANEL_GROUPS = [
     ids: [
       'rocket-launches',
       'earthquakes',
-      'world-pulse-events',
       'local-firms',
       'fire-perimeters',
       'gnss-integrity',
@@ -92,6 +89,13 @@ const PANEL_GROUPS = [
     ids: ['directions', 'radio'],
   },
 ];
+const HIDDEN_DATA_LAYER_IDS = new Set([
+  'recent-imagery',
+  'street-level',
+  'alpr-cameras',
+  'local-adsb',
+  'world-pulse-events',
+]);
 const PANEL_ORDER = PANEL_GROUPS.flatMap(({ label, ids }) =>
   ids.map((id) => ({ id, label })),
 );
@@ -284,6 +288,7 @@ export class LayerPanel {
 
     const generation = this._generation;
     const layers = this.getAll()
+      .filter((layer) => !HIDDEN_DATA_LAYER_IDS.has(layer.id))
       .slice()
       .sort(
         (a, b) =>
