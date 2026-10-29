@@ -4,6 +4,7 @@ export function createAtmosphereMaterial(glowColor = 0x00f0ff): THREE.ShaderMate
   return new THREE.ShaderMaterial({
     uniforms: {
       glowColor: { value: new THREE.Color(glowColor) },
+      opacityFactor: { value: 0.7 },
     },
     vertexShader: `
       varying vec3 vNormal;
@@ -20,13 +21,14 @@ export function createAtmosphereMaterial(glowColor = 0x00f0ff): THREE.ShaderMate
       varying vec3 vNormal;
       varying vec3 vPosition;
       uniform vec3 glowColor;
+      uniform float opacityFactor;
 
       void main() {
         vec3 viewDir = normalize(-vPosition);
         // Fresnel rim effect
         float rim = 1.0 - max(0.0, dot(vNormal, viewDir));
-        float intensity = pow(rim, 3.2);
-        gl_FragColor = vec4(glowColor, intensity * 0.7);
+        float rimIntensity = pow(rim, 3.2);
+        gl_FragColor = vec4(glowColor, rimIntensity * opacityFactor);
       }
     `,
     blending: THREE.AdditiveBlending,

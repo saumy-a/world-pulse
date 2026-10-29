@@ -1,197 +1,124 @@
-import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
+import { useEffect, useState } from 'react';
 import { useEventStore } from './store/useEventStore';
 import { GlobeCanvas } from './components/globe/GlobeCanvas';
-import { FlatMapCanvas } from './components/map/FlatMapCanvas';
-import { TopNav } from './components/hud/TopNav';
-import { LeftLayerPanel } from './components/hud/LeftLayerPanel';
-import { EventFeed } from './components/hud/EventFeed';
-import { CommandDock } from './components/hud/CommandDock';
-import { EventDetailModal } from './components/hud/EventDetailModal';
-import { NotificationToast } from './components/notifications/NotificationToast';
-import { generateRandomEvent } from './services/mockEvents';
-import { initSocketConnection, disconnectSocket } from './services/socket';
-import type { WorldEvent } from './types';
-
-// Lazy-load heavy modals that are rarely shown (only rendered when toggled open)
-const FilterBar = lazy(() => import('./components/hud/FilterBar').then(m => ({ default: m.FilterBar })));
-const StatsDrawer = lazy(() => import('./components/hud/StatsDrawer').then(m => ({ default: m.StatsDrawer })));
-const TimelineReplay = lazy(() => import('./components/hud/TimelineReplay').then(m => ({ default: m.TimelineReplay })));
-const AiIntelligenceBriefing = lazy(() => import('./components/ai/AiIntelligenceBriefing').then(m => ({ default: m.AiIntelligenceBriefing })));
-const AnalyticsModal = lazy(() => import('./components/analytics/AnalyticsModal').then(m => ({ default: m.AnalyticsModal })));
-const AuthModal = lazy(() => import('./components/auth/AuthModal').then(m => ({ default: m.AuthModal })));
-const BookmarksModal = lazy(() => import('./components/bookmarks/BookmarksModal').then(m => ({ default: m.BookmarksModal })));
-const AdminDashboardModal = lazy(() => import('./components/admin/AdminDashboardModal').then(m => ({ default: m.AdminDashboardModal })));
-
-const STORAGE_BOOKMARKS = 'worldpulse_bookmarks';
+import { CalmTopBar } from './components/hud/CalmTopBar';
+import { RightNowSummary } from './components/hud/RightNowSummary';
+import { LiveTicker } from './components/hud/LiveTicker';
+import { CornerControls } from './components/hud/CornerControls';
+import { EventDetailCard } from './components/hud/EventDetailCard';
+import { fetchLiveEarthquakes } from './services/usgsAdapter';
+import { fetchNearbyFlights } from './services/flightAdapter';
 
 export function App() {
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [isStatsOpen, setIsStatsOpen] = useState(false);
-  const [isReplayOpen, setIsReplayOpen] = useState(false);
-  const [isAiOpen, setIsAiOpen] = useState(false);
-  const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [activeToastEvent, setActiveToastEvent] = useState<WorldEvent | null>(null);
+  const addEvents = useEventStore((s) => s.addEvents);
+  const flightsEnabled = useEventStore((s) => s.activeLayers.flights ?? false);
+  const [introVisible, setIntroVisible] = useState(() => !localStorage.getItem('world-pulse-intro-seen'));
+  const [hintVisible, setHintVisible] = useState(() => !localStorage.getItem('world-pulse-hint-seen'));
 
-  // Load persistent bookmarks
-  const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const saved = localStorage.getItem(STORAGE_BOOKMARKS);
-      return saved ? JSON.parse(saved) : ['evt-usgs-1', 'evt-gh-1'];
-    } catch {
-      return [];
-    }
-  });
-
-  const toggleBookmark = useCallback((id: string) => {
-    setBookmarkedIds((prev) => {
-      const updated = prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id];
+  // Initialize event stream and poll live USGS earthquakes
+  useEffect(() => {
+    // Show only records received from the live USGS feed.
+    let isMounted = true;
+    const controller = new AbortController();
+    const loadLiveEarthquakes = async () => {
       try {
-        localStorage.setItem(STORAGE_BOOKMARKS, JSON.stringify(updated));
-      } catch {
-        // Ignore
+        const liveQuakes = await fetchLiveEarthquakes(controller.signal);
+        if (isMounted && liveQuakes.length > 0) {
+          addEvents(liveQuakes);
+        }
+      } catch (err) {
+        console.warn('[World Pulse] Earthquake telemetry sync notice:', err);
       }
-      return updated;
-    });
-  }, []);
+    };
 
-  const selectedEvent = useEventStore((s) => s.selectedEvent);
-  const setSelectedEvent = useEventStore((s) => s.setSelectedEvent);
-  const isSimulatorActive = useEventStore((s) => s.isSimulatorActive);
-  const addEvent = useEventStore((s) => s.addEvent);
-  const viewMode = useEventStore((s) => s.viewMode);
+    loadLiveEarthquakes();
 
-  // 1. Initialize real-time Socket.IO connection
+    // Refresh the live feed every 60 seconds.
+    const interval = setInterval(loadLiveEarthquakes, 60000);
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+      clearInterval(interval);
+    };
+  }, [addEvents]);
+
   useEffect(() => {
-    initSocketConnection();
-    return () => disconnectSocket();
-  }, []);
-
-  // 2. Real-time Ingestion Simulator Loop
-  useEffect(() => {
-    if (!isSimulatorActive) return;
-
-    const interval = setInterval(() => {
-      const nextEvt = generateRandomEvent();
-      addEvent(nextEvt);
-
-      if (nextEvt.importance >= 7.5) {
-        setActiveToastEvent(nextEvt);
+    const store = useEventStore.getState();
+    if (!flightsEnabled) {
+      useEventStore.setState({ events: store.events.filter((event) => event.source !== 'flight') });
+      store.setTrackedFlightId(null);
+      return;
+    }
+    let active = true;
+    let timer = 0;
+    let controller: AbortController | null = null;
+    const refresh = async () => {
+      controller = new AbortController();
+      try {
+        const flights = await fetchNearbyFlights(39, -98, controller.signal);
+        if (active) {
+          useEventStore.setState((state) => ({
+            events: [...state.events.filter((event) => event.source !== 'flight'), ...flights]
+              .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
+              .slice(0, 300),
+          }));
+        }
+      } catch (error) {
+        if (active && !controller.signal.aborted) console.warn('[World Pulse] Flight feed unavailable:', error);
+      } finally {
+        if (active) timer = window.setTimeout(refresh, 25000);
       }
-    }, 6500);
+    };
+    void refresh();
+    return () => { active = false; window.clearTimeout(timer); controller?.abort(); };
+  }, [flightsEnabled]);
 
-    return () => clearInterval(interval);
-  }, [isSimulatorActive, addEvent]);
+  useEffect(() => {
+    if (!introVisible) return;
+    const timer = window.setTimeout(() => {
+      setIntroVisible(false);
+      localStorage.setItem('world-pulse-intro-seen', '1');
+    }, 2400);
+    return () => window.clearTimeout(timer);
+  }, [introVisible]);
 
   return (
-    <div
-      className="w-screen h-screen relative overflow-hidden"
-      style={{
-        background: 'var(--bg-dark)',
-        color: 'var(--text-primary)',
-        fontFamily: 'var(--font-sans)',
-      }}
-    >
-      {/* ── 1. Full-Screen Earth Globe / 2D Map Canvas (Background Viewport) ── */}
+    <main className="relative w-screen h-screen overflow-hidden bg-[#070a12] font-sans antialiased">
+      {/* 1. Photorealistic 3D Earth Globe Canvas (Hero Centerpiece) */}
       <div className="absolute inset-0 z-0">
-        {viewMode === '3d' ? <GlobeCanvas /> : <FlatMapCanvas />}
+        <GlobeCanvas />
       </div>
 
-      {/* ── 2. Top-Bar System: Title (Left) + Actions (Center) + Style Indicator (Right) ── */}
-      <TopNav
-        isFiltersOpen={isFiltersOpen}
-        onToggleFilters={() => {
-          setIsFiltersOpen(!isFiltersOpen);
-          setIsStatsOpen(false);
-          setIsAiOpen(false);
-        }}
-        isStatsOpen={isStatsOpen}
-        onToggleStats={() => {
-          setIsStatsOpen(!isStatsOpen);
-          setIsFiltersOpen(false);
-          setIsAiOpen(false);
-        }}
-        isReplayOpen={isReplayOpen}
-        onToggleReplay={() => setIsReplayOpen(!isReplayOpen)}
-        isAiOpen={isAiOpen}
-        onToggleAi={() => {
-          setIsAiOpen(!isAiOpen);
-          setIsFiltersOpen(false);
-          setIsStatsOpen(false);
-        }}
-        onToggleAnalyticsModal={() => setIsAnalyticsModalOpen(true)}
-        onToggleAuthModal={() => setIsAuthOpen(true)}
-        onToggleBookmarksModal={() => setIsBookmarksOpen(true)}
-        onToggleAdminModal={() => setIsAdminOpen(true)}
-        isAdminOpen={isAdminOpen}
-        bookmarkCount={bookmarkedIds.length}
-      />
+      {/* 2. Slim Top Navigation Bar with Category Chips */}
+      <CalmTopBar />
 
-      {/* ── 3. Left Panel Stack: Data Layers + Incident Radar ── */}
-      <div className="left-rail-stack">
-        <LeftLayerPanel />
-        <EventFeed
-          onSelectEvent={(evt) => setSelectedEvent(evt)}
-          bookmarkedIds={bookmarkedIds}
-          onToggleBookmark={toggleBookmark}
-        />
-      </div>
+      {/* 3. Left "Right Now" Plain-Language Summary Glass Card */}
+      <RightNowSummary />
 
-      {/* ── 4. Unified Bottom Command Dock (Locations | AI Intel | Visual Presets) ── */}
-      <CommandDock onOpenAiBriefing={() => setIsAiOpen(true)} />
+      {/* 4. Event Detail Card (Right-side slide-in when an event is selected) */}
+      <EventDetailCard />
 
-      {/* ── 5. Flyout Modals & Drawers (Lazy-loaded for performance) ── */}
-      <Suspense fallback={null}>
-        {/* Filter Drawer */}
-        {isFiltersOpen && <FilterBar onClose={() => setIsFiltersOpen(false)} />}
+      {/* 5. Live Scrolling Event Ticker at Bottom */}
+      <LiveTicker />
 
-        {/* Analytics Drawer */}
-        {isStatsOpen && <StatsDrawer onClose={() => setIsStatsOpen(false)} />}
-
-        {/* AI Intelligence Briefing Drawer */}
-        {isAiOpen && <AiIntelligenceBriefing onClose={() => setIsAiOpen(false)} />}
-
-        {/* Historical Timeline Replay */}
-        {isReplayOpen && <TimelineReplay onClose={() => setIsReplayOpen(false)} />}
-
-        {/* Collector Health & System Console Modal */}
-        {isAnalyticsModalOpen && (
-          <AnalyticsModal onClose={() => setIsAnalyticsModalOpen(false)} />
-        )}
-
-        {/* Auth Gateway / Profile Modal */}
-        {isAuthOpen && <AuthModal onClose={() => setIsAuthOpen(false)} />}
-
-        {/* Bookmarks & Export Suite Modal */}
-        {isBookmarksOpen && (
-          <BookmarksModal
-            bookmarkedIds={bookmarkedIds}
-            onToggleBookmark={toggleBookmark}
-            onClose={() => setIsBookmarksOpen(false)}
-          />
-        )}
-
-        {/* Dedicated Admin Command & Control Modal */}
-        {isAdminOpen && <AdminDashboardModal onClose={() => setIsAdminOpen(false)} />}
-      </Suspense>
-
-      {/* Real-time High-Severity Notification Toast */}
-      <NotificationToast
-        event={activeToastEvent}
-        onDismiss={() => setActiveToastEvent(null)}
-      />
-
-      {/* Event Detail Inspector Drawer */}
-      <EventDetailModal
-        event={selectedEvent}
-        onClose={() => setSelectedEvent(null)}
-        bookmarked={selectedEvent ? bookmarkedIds.includes(selectedEvent.id) : false}
-        onToggleBookmark={selectedEvent ? () => toggleBookmark(selectedEvent.id) : undefined}
-      />
-    </div>
+      {/* 6. Corner Navigation Controls (Zoom in/out, Reset View) */}
+      <CornerControls />
+      {hintVisible && !introVisible && (
+        <button
+          className="wp-explore-hint"
+          onClick={() => { setHintVisible(false); localStorage.setItem('world-pulse-hint-seen', '1'); }}
+        >Click any pulse to explore · dismiss</button>
+      )}
+      {introVisible && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070a12] transition-opacity duration-700" role="status">
+          <div className="text-center">
+            <div className="mx-auto mb-5 h-24 w-24 animate-pulse rounded-full border border-sky-300/40 bg-sky-400/10 shadow-[0_0_80px_rgba(56,189,248,.28)]" />
+            <p className="text-sm tracking-wide text-slate-200">The world, in motion.</p>
+          </div>
+        </div>
+      )}
+    </main>
   );
 }
 

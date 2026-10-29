@@ -15,6 +15,7 @@ import {
   Volume2,
   VolumeX,
   Bookmark,
+  LayoutDashboard,
 } from 'lucide-react';
 
 interface TopNavProps {
@@ -31,6 +32,8 @@ interface TopNavProps {
   onToggleBookmarksModal: () => void;
   onToggleAdminModal?: () => void;
   isAdminOpen?: boolean;
+  onToggleDashboardModal?: () => void;
+  isDashboardOpen?: boolean;
   bookmarkCount: number;
 }
 
@@ -48,6 +51,8 @@ export const TopNav: FC<TopNavProps> = ({
   onToggleBookmarksModal,
   onToggleAdminModal,
   isAdminOpen = false,
+  onToggleDashboardModal,
+  isDashboardOpen = false,
   bookmarkCount,
 }) => {
   const [utcTime, setUtcTime] = useState('');
@@ -225,6 +230,22 @@ export const TopNav: FC<TopNavProps> = ({
               </span>
             )}
           </button>
+
+          {/* Prominent Mission Dashboard Button */}
+          {onToggleDashboardModal && (
+            <button
+              onClick={onToggleDashboardModal}
+              title="Open Integrated Mission Dashboard"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-mono text-[11px] font-bold tracking-wider transition-all cursor-pointer ${
+                isDashboardOpen
+                  ? 'bg-cyan-500/30 border-cyan-400 text-cyan-200 shadow-[0_0_18px_rgba(0,212,255,0.45)]'
+                  : 'bg-cyan-950/80 border-cyan-500/50 text-cyan-300 hover:bg-cyan-900/80 hover:border-cyan-400'
+              }`}
+            >
+              <LayoutDashboard className="w-3.5 h-3.5 text-cyan-400" />
+              <span>DASHBOARD</span>
+            </button>
+          )}
 
           {/* Admin Command Console Toggle */}
           {onToggleAdminModal && (

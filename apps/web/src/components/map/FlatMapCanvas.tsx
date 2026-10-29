@@ -47,6 +47,19 @@ const FlatMapCanvasInner: FC = () => {
       if (filters.selectedSources.length > 0 && !filters.selectedSources.includes(evt.source)) {
         return false;
       }
+      if (filters.country && evt.country && !evt.country.toLowerCase().includes(filters.country.toLowerCase())) {
+        return false;
+      }
+      if (filters.startDate) {
+        const evtTime = new Date(evt.timestamp).getTime();
+        const startTime = new Date(filters.startDate).getTime();
+        if (evtTime < startTime) return false;
+      }
+      if (filters.endDate) {
+        const evtTime = new Date(evt.timestamp).getTime();
+        const endTime = new Date(filters.endDate).getTime();
+        if (evtTime > endTime) return false;
+      }
       if (filters.searchQuery) {
         const q = filters.searchQuery.toLowerCase();
         const matchTitle = evt.title.toLowerCase().includes(q);

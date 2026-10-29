@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import type { WorldEvent } from '../types';
-import { INITIAL_MOCK_EVENTS } from '../services/mockEvents';
 import {
   playHoverBlip,
   playNewIncidentSound,
@@ -14,6 +13,9 @@ export interface FilterState {
   selectedCategories: string[];
   selectedSources: string[];
   minImportance: number;
+  country: string;
+  startDate: string; // ISO string or YYYY-MM-DD
+  endDate: string;   // ISO string or YYYY-MM-DD
 }
 
 export type ThemeAccent = 'cyan' | 'amber' | 'emerald' | 'rose';
@@ -23,6 +25,7 @@ interface EventStoreState {
   selectedEvent: WorldEvent | null;
   hoveredEvent: WorldEvent | null;
   cameraTarget: { lat: number; lon: number } | null;
+  trackedFlightId: string | null;
 
   // Visual layers (Earthquake/Natural, Code/Tech, Aerospace/NASA, Financial, Weather)
   activeLayers: Record<string, boolean>;
@@ -55,6 +58,7 @@ interface EventStoreState {
   setSelectedEvent: (event: WorldEvent | null) => void;
   setHoveredEvent: (event: WorldEvent | null) => void;
   setCameraTarget: (target: { lat: number; lon: number } | null) => void;
+  setTrackedFlightId: (id: string | null) => void;
   
   setViewMode: (mode: '3d' | '2d') => void;
   toggleLayer: (layerId: string) => void;
@@ -65,6 +69,8 @@ interface EventStoreState {
   toggleCategory: (category: string) => void;
   toggleSource: (source: string) => void;
   setMinImportance: (importance: number) => void;
+  setCountryFilter: (country: string) => void;
+  setDateRange: (startDate: string, endDate: string) => void;
   resetFilters: () => void;
 
   setIsConnected: (connected: boolean) => void;
@@ -77,10 +83,11 @@ interface EventStoreState {
 }
 
 export const useEventStore = create<EventStoreState>((set) => ({
-  events: INITIAL_MOCK_EVENTS,
-  selectedEvent: INITIAL_MOCK_EVENTS[0] ?? null,
+  events: [],
+  selectedEvent: null,
   hoveredEvent: null,
   cameraTarget: null,
+  trackedFlightId: null,
 
   activeLayers: {
     natural: true,
@@ -100,6 +107,9 @@ export const useEventStore = create<EventStoreState>((set) => ({
     selectedCategories: [],
     selectedSources: [],
     minImportance: 0,
+    country: '',
+    startDate: '',
+    endDate: '',
   },
 
   isConnected: false,
@@ -112,26 +122,19 @@ export const useEventStore = create<EventStoreState>((set) => ({
 
   addEvent: (event) =>
     set((state) => {
-      if (state.events.some((e) => e.id === event.id)) return state;
-
-      // Audio feedback
-      if (!state.isSoundMuted) {
-        if (event.importance >= 7.5) {
-          playCriticalAlertSound();
-        } else {
-          playNewIncidentSound();
-        }
-      }
-
-      const updated = [event, ...state.events].slice(0, 300);
+      const updated = [event, ...state.events.filter((item) => item.id !== event.id)]
+        .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
+        .slice(0, 300);
       return { events: updated };
     }),
 
   addEvents: (newEvents) =>
     set((state) => {
-      const existingIds = new Set(state.events.map((e) => e.id));
-      const fresh = newEvents.filter((e) => !existingIds.has(e.id));
-      const updated = [...fresh, ...state.events].slice(0, 300);
+      const merged = new Map(state.events.map((event) => [event.id, event]));
+      for (const event of newEvents) merged.set(event.id, event);
+      const updated = [...merged.values()]
+        .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
+        .slice(0, 300);
       return { events: updated };
     }),
 
@@ -150,6 +153,7 @@ export const useEventStore = create<EventStoreState>((set) => ({
   },
 
   setCameraTarget: (cameraTarget) => set({ cameraTarget }),
+  setTrackedFlightId: (trackedFlightId) => set({ trackedFlightId }),
 
   setViewMode: (viewMode) => set({ viewMode }),
 
@@ -198,6 +202,16 @@ export const useEventStore = create<EventStoreState>((set) => ({
       filters: { ...state.filters, minImportance },
     })),
 
+  setCountryFilter: (country) =>
+    set((state) => ({
+      filters: { ...state.filters, country },
+    })),
+
+  setDateRange: (startDate, endDate) =>
+    set((state) => ({
+      filters: { ...state.filters, startDate, endDate },
+    })),
+
   resetFilters: () =>
     set({
       filters: {
@@ -205,6 +219,9 @@ export const useEventStore = create<EventStoreState>((set) => ({
         selectedCategories: [],
         selectedSources: [],
         minImportance: 0,
+        country: '',
+        startDate: '',
+        endDate: '',
       },
     }),
 

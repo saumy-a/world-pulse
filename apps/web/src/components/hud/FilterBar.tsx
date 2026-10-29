@@ -19,10 +19,18 @@ export const FilterBar: FC<FilterBarProps> = ({ onClose }) => {
   const toggleCategory = useEventStore((s) => s.toggleCategory);
   const toggleSource = useEventStore((s) => s.toggleSource);
   const setMinImportance = useEventStore((s) => s.setMinImportance);
+  const setCountryFilter = useEventStore((s) => s.setCountryFilter);
+  const setDateRange = useEventStore((s) => s.setDateRange);
   const resetFilters = useEventStore((s) => s.resetFilters);
 
   const categories = Object.values(EventCategory);
-  const hasActiveFilters = filters.selectedCategories.length > 0 || filters.selectedSources.length > 0 || filters.minImportance > 0;
+  const hasActiveFilters =
+    filters.selectedCategories.length > 0 ||
+    filters.selectedSources.length > 0 ||
+    filters.minImportance > 0 ||
+    Boolean(filters.country) ||
+    Boolean(filters.startDate) ||
+    Boolean(filters.endDate);
 
   return (
     <div
@@ -186,6 +194,53 @@ export const FilterBar: FC<FilterBarProps> = ({ onClose }) => {
                 </button>
               );
             })}
+          </div>
+        </div>
+
+        {/* Country & Date Range Filters */}
+        <div
+          className="p-3"
+          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <h4
+            className="mb-2"
+            style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '2px', color: 'var(--text-dim)', textTransform: 'uppercase' }}
+          >
+            GEOGRAPHIC NATION / COUNTRY
+          </h4>
+          <input
+            type="text"
+            value={filters.country}
+            onChange={(e) => setCountryFilter(e.target.value)}
+            placeholder="e.g. United States, Japan, Iceland..."
+            className="w-full px-2.5 py-1.5 text-[9px] font-mono text-slate-200 bg-black/40 border border-white/10 rounded focus:outline-none focus:border-cyan-400"
+          />
+
+          <h4
+            className="mt-3 mb-2"
+            style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '2px', color: 'var(--text-dim)', textTransform: 'uppercase' }}
+          >
+            TEMPORAL DATE RANGE
+          </h4>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <span className="block text-[7px] font-mono text-slate-400 uppercase mb-0.5">START DATE</span>
+              <input
+                type="date"
+                value={filters.startDate}
+                onChange={(e) => setDateRange(e.target.value, filters.endDate)}
+                className="w-full px-2 py-1 text-[8px] font-mono text-slate-200 bg-black/40 border border-white/10 rounded focus:outline-none focus:border-cyan-400"
+              />
+            </div>
+            <div>
+              <span className="block text-[7px] font-mono text-slate-400 uppercase mb-0.5">END DATE</span>
+              <input
+                type="date"
+                value={filters.endDate}
+                onChange={(e) => setDateRange(filters.startDate, e.target.value)}
+                className="w-full px-2 py-1 text-[8px] font-mono text-slate-200 bg-black/40 border border-white/10 rounded focus:outline-none focus:border-cyan-400"
+              />
+            </div>
           </div>
         </div>
       </div>

@@ -1,8 +1,13 @@
 import { useState, type FC } from 'react';
 import { useEventStore } from '../../store/useEventStore';
-import { Sparkles, MapPin } from 'lucide-react';
+import { Sparkles, MapPin, Activity, Github, Globe2, Flame, TrendingUp } from 'lucide-react';
 
-export const CommandDock: FC<{ onOpenAiBriefing: () => void }> = ({ onOpenAiBriefing }) => {
+interface CommandDockProps {
+  onOpenAiBriefing: () => void;
+  onOpenChannel?: (channel: 'github' | 'wikimedia' | 'earthquake_weather' | 'crypto') => void;
+}
+
+export const CommandDock: FC<CommandDockProps> = ({ onOpenAiBriefing, onOpenChannel }) => {
   const [activeStyle, setActiveStyle] = useState('normal');
   const setCameraTarget = useEventStore((s) => s.setCameraTarget);
   const setSearchQuery = useEventStore((s) => s.setSearchQuery);
@@ -48,23 +53,62 @@ export const CommandDock: FC<{ onOpenAiBriefing: () => void }> = ({ onOpenAiBrie
         </div>
       </div>
 
-      {/* ── Center Section: Voice / AI Intelligence Pill ── */}
-      <div className="dock-voice-pill shrink-0">
-        <button
-          onClick={onOpenAiBriefing}
-          className="dock-voice-btn"
-          title="Open AI Neural Intelligence Briefing"
-        >
-          <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-          <span>AI INTEL</span>
-        </button>
-        <div className="hidden lg:flex flex-col text-right">
-          <span className="text-[8px] font-mono text-cyan-400 uppercase tracking-widest">
-            VOICE & CLUSTERS
-          </span>
-          <span className="text-[7px] font-mono text-slate-400">
-            NEURAL RECON
-          </span>
+      {/* ── Center Section: Channels + AI Intelligence Pill ── */}
+      <div className="flex items-center gap-2">
+        {onOpenChannel && (
+          <div className="hidden md:flex items-center gap-1">
+            <button
+              onClick={() => onOpenChannel('github')}
+              title="Open GitHub Activity Stream"
+              className="px-2 py-1.5 rounded-lg border border-cyan-500/30 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-300 text-[9px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer"
+            >
+              <Github className="w-3 h-3" />
+              <span>GITHUB</span>
+            </button>
+            <button
+              onClick={() => onOpenChannel('wikimedia')}
+              title="Open Wikimedia Edit Stream"
+              className="px-2 py-1.5 rounded-lg border border-purple-500/30 bg-purple-950/40 hover:bg-purple-900/60 text-purple-300 text-[9px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer"
+            >
+              <Globe2 className="w-3 h-3" />
+              <span>WIKI</span>
+            </button>
+            <button
+              onClick={() => onOpenChannel('earthquake_weather')}
+              title="Open USGS Seismic & Weather Alerts"
+              className="px-2 py-1.5 rounded-lg border border-rose-500/30 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 text-[9px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer"
+            >
+              <Flame className="w-3 h-3" />
+              <span>SEISMIC</span>
+            </button>
+            <button
+              onClick={() => onOpenChannel('crypto')}
+              title="Open Crypto & Financial Sentinel"
+              className="px-2 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 text-[9px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer"
+            >
+              <TrendingUp className="w-3 h-3" />
+              <span>CRYPTO</span>
+            </button>
+          </div>
+        )}
+
+        <div className="dock-voice-pill shrink-0">
+          <button
+            onClick={onOpenAiBriefing}
+            className="dock-voice-btn"
+            title="Open AI Neural Intelligence Briefing"
+          >
+            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+            <span>AI INTEL</span>
+          </button>
+          <div className="hidden lg:flex flex-col text-right">
+            <span className="text-[8px] font-mono text-cyan-400 uppercase tracking-widest">
+              VOICE & CLUSTERS
+            </span>
+            <span className="text-[7px] font-mono text-slate-400">
+              NEURAL RECON
+            </span>
+          </div>
         </div>
       </div>
 

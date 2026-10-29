@@ -23,33 +23,45 @@ export function latLongToVector3(
 }
 
 /**
- * Visual styling configuration for various event sources and categories.
+ * Clean, consistent category color palette for World Pulse:
+ * - Earthquakes: Red-Orange (#f97316)
+ * - Code: Emerald Green (#10b981)
+ * - Knowledge / Wikipedia: Blue/Cyan (#38bdf8)
+ * - Markets: Gold (#eab308)
+ * - Weather: Cyan (#06b6d4)
  */
-export const CATEGORY_COLORS: Record<string, string> = {
-  [EventCategory.Technology]: '#38bdf8', // Cyan
-  [EventCategory.Geopolitics]: '#f97316', // Orange
-  [EventCategory.Natural]: '#ef4444',     // Crimson
-  [EventCategory.Weather]: '#06b6d4',     // Aqua
-  [EventCategory.Finance]: '#10b981',     // Emerald
-  [EventCategory.Space]: '#f59e0b',       // Amber
-  [EventCategory.News]: '#ec4899',        // Rose
-  [EventCategory.Other]: '#94a3b8',       // Slate
+export const CATEGORY_ACCENTS: Record<string, string> = {
+  all: '#94a3b8',
+  earthquakes: '#f97316',
+  natural: '#f97316',
+  code: '#10b981',
+  technology: '#10b981',
+  knowledge: '#38bdf8',
+  geopolitics: '#38bdf8',
+  markets: '#eab308',
+  finance: '#eab308',
+  weather: '#06b6d4',
+  other: '#94a3b8',
 };
 
 export const SOURCE_COLORS: Record<string, string> = {
-  [EventSource.GitHub]: '#38bdf8',
-  [EventSource.Wikimedia]: '#a855f7',
-  [EventSource.USGS]: '#ef4444',
-  [EventSource.OpenMeteo]: '#06b6d4',
-  [EventSource.CoinGecko]: '#10b981',
-  [EventSource.NASA]: '#f59e0b',
+  flight: '#e7f2ff',
+  [EventSource.USGS]: '#f97316',       // Earthquakes: Red-Orange
+  [EventSource.GitHub]: '#10b981',     // Code: Green
+  [EventSource.Wikimedia]: '#38bdf8',  // Wikipedia: Blue
+  [EventSource.CoinGecko]: '#eab308',  // Markets: Gold
+  [EventSource.OpenMeteo]: '#06b6d4',  // Weather: Cyan
+  [EventSource.NASA]: '#38bdf8',
   [EventSource.LaunchLibrary]: '#eab308',
   [EventSource.News]: '#ec4899',
-  [EventSource.HackerNews]: '#f97316',
+  [EventSource.HackerNews]: '#10b981',
 };
 
 export function getEventColor(category?: string, source?: string): string {
   if (source && SOURCE_COLORS[source]) return SOURCE_COLORS[source];
-  if (category && CATEGORY_COLORS[category]) return CATEGORY_COLORS[category];
-  return '#38bdf8';
+  if (category) {
+    const key = category.toLowerCase();
+    if (CATEGORY_ACCENTS[key]) return CATEGORY_ACCENTS[key];
+  }
+  return '#f97316';
 }
