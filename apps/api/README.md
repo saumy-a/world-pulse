@@ -32,7 +32,16 @@ Backend for World Pulse (Express + TypeScript + MongoDB with Mongoose).
 - `GET /api/v1/health` returns service status and a timestamp
 - `GET /api/v1/events` returns the paginated event feed
 - `POST /api/v1/events/ingest` accepts authenticated collector batches
+- `POST /api/v1/diagnostics/client` stores rate-limited layer activations and World Pulse API outcomes
+- `POST /api/v1/diagnostics/collectors` stores authenticated collector source outcomes
 - `GET /api/v1/analytics/overview` returns 24-hour event metrics
+
+Diagnostic records are stored separately in MongoDB's `api_logs` collection and
+expire after 30 days. They include layer/source IDs, action, timing, status, and
+sanitized error codes; they do not store request URLs, headers, credentials, or
+raw error messages. Browser session IDs are random and scoped to one tab session.
+Collector source outcomes are recorded per run; client records cover layer
+activations and World Pulse event/analytics requests.
 
 ## Database note
 

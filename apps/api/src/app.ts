@@ -5,6 +5,7 @@ import morgan from "morgan";
 import eventsRouter from "./routes/events";
 import ingestRouter from "./routes/ingest";
 import analyticsRouter from "./routes/analytics";
+import diagnosticsRouter from "./routes/diagnostics";
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.get("/health", (_req, res) => {
 // Events API
 app.use("/api/v1/events", eventsRouter);
 app.use("/api/v1/events/ingest", ingestRouter);
+app.use("/api/v1/diagnostics", diagnosticsRouter);
 app.use("/api/v1/analytics", analyticsRouter);
 
 export default app;

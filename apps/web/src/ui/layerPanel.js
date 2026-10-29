@@ -1,6 +1,7 @@
 import { syncChipGroup } from './chipGroup.js';
 import { syncRowList } from './rowList.js';
 import { layerFeedState } from '../data/feedState.js';
+import { recordClientDiagnostic } from '../data/diagnostics.js';
 export { layerFeedState } from '../data/feedState.js';
 import { GUIDANCE_STATUSES } from '../loadingFeedback.js';
 import { keyGuidanceText, keyRequirementText } from './keyGuidance.js';
@@ -352,11 +353,27 @@ export class LayerPanel {
           return;
         toggle.setAttribute('aria-disabled', 'true');
         toggle.setAttribute('aria-busy', 'true');
+        const enabling = !this.isEnabled(layer.id);
+        const startedAt = performance.now();
         try {
-          await this.setEnabled(layer.id, !this.isEnabled(layer.id), {
+          await this.setEnabled(layer.id, enabling, {
             origin: 'user',
           });
+          const enabled = Boolean(this.isEnabled(layer.id));
+          recordClientDiagnostic({
+            action: enabled === enabling ? (enabled ? 'layer_enabled' : 'layer_disabled') : 'layer_activation_failed',
+            source: layer.id,
+            durationMs: performance.now() - startedAt,
+            ...(enabled !== enabling ? { errorCode: 'state_not_applied' } : {}),
+          });
         } catch (error) {
+          recordClientDiagnostic({
+            action: 'layer_activation_failed',
+            source: layer.id,
+            durationMs: performance.now() - startedAt,
+            statusCode: Number.isInteger(error?.response?.status) ? error.response.status : undefined,
+            errorCode: error?.code || error?.name || 'activation_failed',
+          });
           console.warn(`[Data] ${layer.id} toggle error:`, error);
         } finally {
           const current = this.getAll().find(({ id }) => id === layer.id);

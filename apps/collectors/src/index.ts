@@ -65,27 +65,77 @@ async function publishEvents(events: WorldEvent[]): Promise<void> {
   }
 }
 
+interface CollectorDiagnostic {
+  action: "collector_succeeded" | "collector_failed" | "collector_publish_failed";
+  source: string;
+  durationMs?: number;
+  resultCount?: number;
+  statusCode?: number;
+  errorCode?: string;
+}
+
+async function publishDiagnostics(logs: CollectorDiagnostic[]): Promise<void> {
+  if (logs.length === 0) return;
+  const apiUrl = process.env.WORLD_PULSE_API_URL ?? "http://localhost:5000";
+  const apiBaseUrl = apiUrl.endsWith("/") ? apiUrl.slice(0, -1) : apiUrl;
+  const ingestKey = process.env.WORLD_PULSE_INGEST_KEY;
+  if (!ingestKey) return;
+  await axios.post(
+    `${apiBaseUrl}/api/v1/diagnostics/collectors`,
+    { logs },
+    { headers: { "x-world-pulse-ingest-key": ingestKey }, timeout: 15_000 },
+  );
+}
+
+function diagnosticError(error: unknown): Pick<CollectorDiagnostic, "statusCode" | "errorCode"> {
+  const value = error as { code?: unknown; name?: unknown; response?: { status?: unknown } };
+  const status = Number(value?.response?.status);
+  const rawCode = String(value?.code ?? value?.name ?? "collector_error");
+  return {
+    ...(Number.isInteger(status) && status >= 100 && status <= 599 ? { statusCode: status } : {}),
+    errorCode: rawCode.replace(/[^a-z0-9_.-]/gi, "_").slice(0, 48) || "collector_error",
+  };
+}
+
 // ─── Run all collectors ───────────────────────────────────────────────────────
 
 async function runAllCollectors(): Promise<void> {
   log.info("Starting collection cycle…");
 
-  const results = await Promise.allSettled(
+  const results = await Promise.all(
     collectors.map(async ({ name, collect }) => {
-      const events = await collect();
-      log.info(`[${name}] collected ${events.length} event(s)`);
-      return { name, events };
+      const startedAt = Date.now();
+      try {
+        const events = await collect();
+        log.info(`[${name}] collected ${events.length} event(s)`);
+        return { name, events, durationMs: Date.now() - startedAt };
+      } catch (error) {
+        log.error(`[${name}] collector failed`, error);
+        return { name, events: [] as WorldEvent[], durationMs: Date.now() - startedAt, error };
+      }
     })
   );
 
   let totalEvents = 0;
   const collectedEvents: WorldEvent[] = [];
+  const diagnostics: CollectorDiagnostic[] = [];
   for (const result of results) {
-    if (result.status === "fulfilled") {
-      totalEvents += result.value.events.length;
-      collectedEvents.push(...result.value.events);
+    if ("error" in result) {
+      diagnostics.push({
+        action: "collector_failed",
+        source: result.name,
+        durationMs: result.durationMs,
+        ...diagnosticError(result.error),
+      });
     } else {
-      log.error("Collector failed", result.reason);
+      totalEvents += result.events.length;
+      collectedEvents.push(...result.events);
+      diagnostics.push({
+        action: "collector_succeeded",
+        source: result.name,
+        durationMs: result.durationMs,
+        resultCount: result.events.length,
+      });
     }
   }
 
@@ -93,6 +143,17 @@ async function runAllCollectors(): Promise<void> {
     await publishEvents(collectedEvents);
   } catch (error) {
     log.error("Failed to publish collected events to the API", error);
+    diagnostics.push({
+      action: "collector_publish_failed",
+      source: "world-pulse-events-ingest",
+      ...diagnosticError(error),
+    });
+  }
+
+  try {
+    await publishDiagnostics(diagnostics);
+  } catch (error) {
+    log.error("Failed to publish collector diagnostics to the API", error);
   }
 
   log.info(`Collection cycle complete. Total events: ${totalEvents}`);
