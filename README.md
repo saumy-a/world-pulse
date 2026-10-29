@@ -1,131 +1,98 @@
-# 🌍 World Pulse (Internet Pulse Engine)
+# World Pulse
 
-> **Tagline:** Watch the world's digital and real-world events in real time.
+World Pulse collects public events, stores them in MongoDB, and displays them on an interactive globe. The repository contains the globe web app, a REST API, and scheduled data collectors.
 
-**World Pulse** is a real-time global event aggregation and visualization platform. It collects public data, normalizes records into a shared event schema, stores them in MongoDB, and displays geolocated events on the interactive globe in `apps/web`. The globe app is based on the MIT-licensed God's Eye View project; its license is retained in `apps/web/LICENSE`.
+The globe builds on the MIT-licensed [God's Eye View](apps/web/LICENSE) project. Its existing aircraft, satellite, weather, and camera layers remain available alongside World Pulse events.
 
----
+## What works today
 
-## 🎯 Core Features
+- An interactive Cesium globe with a World Pulse event feed.
+- Feed search, category and importance filters, event details, source links, and browser-saved bookmarks.
+- Scheduled collectors for GitHub, Wikimedia, USGS, Open-Meteo, CoinGecko, NASA, Launch Library 2, news, and Hacker News.
+- An Express API backed by MongoDB/Mongoose for reading events, ingesting collector batches, and a basic analytics overview.
+- A 24-hour, 7-day, and 30-day event timeline in the globe app.
 
-- 🌐 **Interactive 3D Globe**: Explore event markers alongside God's Eye View's existing globe and geospatial layers.
-- ⚡ **Live Event Feed**: Search, filter by category and importance, bookmark events, and fly the globe to a selected event.
-- 🛰️ **Multiple Collectors**: GitHub, Wikimedia, USGS, NASA, CoinGecko, news, weather, launches, and Hacker News sources.
-- 🎯 **Geolocated Event Markers**: Category-colored, importance-scaled records on the inherited 3D globe.
-- 🔍 **Live Feed Controls**: Search, category and importance filters, browser-saved bookmarks, and source links.
-- 🧭 **Globe + Live Layers**: World Pulse events work alongside God's Eye View's aircraft, satellite, weather, and camera layers.
-- 📊 **Basic Analytics + Replay**: 24-hour source/category metrics and a 24-hour/7-day/30-day event timeline scrubber.
-- 🧪 **In Progress**: Advanced analytics, AI briefs, notifications, authentication, and admin workflows remain planned; prototype React components are not yet wired into the active globe app.
+Authentication, user accounts, Redis caching, AI summaries, notifications, event-history APIs, and Socket.IO are not implemented yet. See [API documentation](docs/api.md) for the current endpoints and planned work.
 
----
-
-## 🏗️ Architecture Overview
-
-```
-External feeds
-     │
-     ▼
-Collectors → Normalize → Authenticated REST ingest
-                               │
-                               ▼
-                    Express Events API ───► MongoDB
-                               ▲
-                               │ REST feed + analytics
-                               │
-                 World Pulse / God's Eye View globe
-```
-
----
-
-## 🛠️ Recommended Tech Stack
-
-| Layer | Technology |
-| :--- | :--- |
-| **Frontend** | Vite, JavaScript, CesiumJS (God's Eye View base) |
-| **Styling & UI** | Existing God's Eye View UI and CSS system |
-| **3D & Visualization** | CesiumJS |
-| **Data Fetching** | REST polling |
-| **Backend API** | Node.js, Express.js, TypeScript |
-| **Database & ORM** | MongoDB, Mongoose |
-| **Scheduling** | node-cron |
-| **Cache & Auth** | Planned |
-| **Deployment** | Vercel (Frontend), Railway/Render (Backend), MongoDB |
-| **DevOps & CI/CD** | Docker, GitHub Actions |
-
----
-
-## 📂 Project Structure
+## How the pieces fit
 
 ```text
-world-pulse/
-├── apps/
-│   ├── web/               # Vite/Cesium globe app with World Pulse event feed
-│   ├── api/               # Express REST API backed by MongoDB/Mongoose
-│   └── collectors/        # Microservices for fetching and normalizing external APIs
-├── packages/
-│   ├── shared-types/      # Common TypeScript interfaces & event schemas
-│   └── shared-utils/      # Shared normalization and event utilities
-├── docs/                  # Project documentation
-│   ├── api.md             # REST & Socket.IO API specification
-│   ├── architecture.md    # System architecture & processing pipeline
-│   ├── database.md        # Current MongoDB implementation and future design
-│   ├── roadmap.md         # 6-Week development timeline & phase milestones
-│   └── roles.md           # Team member roles & GitHub workflow
-├── docker-compose.yml     # Local service orchestration
-└── .github/               # GitHub Actions CI/CD workflows
+Public data sources
+        ↓
+Scheduled collectors → normalize events → authenticated batch ingest
+                                               ↓
+                                          Express API ↔ MongoDB
+                                               ↓
+                                     Globe app polls event feed
 ```
 
----
+## Repository layout
 
-## 🌐 Public Data Sources & APIs
+```text
+apps/
+  web/          Vite and Cesium globe application
+  api/          Express, TypeScript, and MongoDB API
+  collectors/   Scheduled source collectors
+packages/
+  shared-types/ Shared event types
+  shared-utils/ Shared normalization utilities
+docs/           Architecture, API, database, and development notes
+docker-compose.yml
+```
 
-1. **GitHub Events API** – Public repositories, commits, pushes, and issues.
-2. **Wikimedia EventStreams** – Real-time Wikipedia page edit streams.
-3. **USGS Earthquake Feed** – Real-time seismic event GeoJSON feeds.
-4. **Open-Meteo API** – Global weather and atmospheric metrics.
-5. **CoinGecko API** – Cryptocurrency market prices and volatility.
-6. **NASA Open APIs** – Astronomical picture of the day, NEOs, and natural events.
-7. **Launch Library 2** – Global rocket launches and space mission events.
-8. **NewsAPI / GNews / RSS Feeds** – Live breaking news coverage.
-9. **Hacker News Firebase API** – Tech discussions, stories, and trending links.
+## Prerequisites
 
----
+- Node.js 24.14+ or 26.x (the web workspace requirement)
+- npm
+- A MongoDB database (local or hosted)
 
-## 👥 Team Roles & Responsibilities
+Docker is optional. Some collectors need provider credentials; sources that do not need credentials can run without them. Review the corresponding `.env.example` files.
 
-- **Saumya (`saumy-a`) – Team Lead**: Repository owner, project coordination, issue prioritization, integration approval, and release sign-off.
-- **Member 1 – Frontend Lead**: Interactive Dashboard, Authentication UI, 3D Globe visualization, D3 charts, Search UI, Socket.IO Client.
-- **Member 2 – Backend Lead**: JWT Authentication, REST API Gateway, Prisma ORM, PostgreSQL queries, Redis caching, Socket.IO Server.
-- **Member 3 – Data Collectors Lead**: Ingestion workers (GitHub, Wikimedia, USGS, NASA, CoinGecko, News), Data Normalization & Geolocation enrichment pipeline.
-- **Member 4 – Analytics & DevOps Lead**: Analytics APIs, Event Replay timeline engine, Notification service, Docker, GitHub Actions CI/CD, Production Deployment.
+## Run locally
 
----
+From the repository root:
 
-## 🚀 Quick Start
+1. Install dependencies:
 
-### Prerequisites
-- Node.js 24.14+ or 26.x for the web workspace, `npm`, and a MongoDB database
-- Docker is optional
+   ```bash
+   npm install
+   ```
 
-### Setup Instructions
+2. Create local environment files from `apps/api/.env.example`, `apps/collectors/.env.example`, and `apps/web/.env.example`.
 
-1. Install the workspace dependencies with `npm install`.
-2. Copy `apps/api/.env.example`, `apps/collectors/.env.example`, and `apps/web/.env.example` to matching `.env` files.
-3. Set `DATABASE_URL` in `apps/api/.env`. Set the same long random `WORLD_PULSE_INGEST_KEY` in the API and collector `.env` files.
-4. Start the API, collectors, and globe in separate terminals:
+3. Set `DATABASE_URL` in `apps/api/.env` to your MongoDB connection string. Set the same long random `WORLD_PULSE_INGEST_KEY` in `apps/api/.env` and `apps/collectors/.env`. The collector uses this key to authenticate batch ingestion.
+
+4. Start each service in a separate terminal:
+
    ```bash
    npm run dev:api
    npm run dev:collectors
    npm run dev:web
    ```
-5. Open the Vite URL shown in the web terminal. The World Pulse Events panel can load stored events; `npm run seed` inserts sample records for a first look.
 
----
+5. Open the local URL printed by the web dev server. The web API URL defaults to `http://localhost:5000` in its environment example.
 
-## 📚 Detailed Documentation
+To populate a development database with sample events, run `npm run seed`. Never commit `.env` files or real credentials.
 
-- 📐 [Architecture Documentation](docs/architecture.md) – Detailed system flow & event pipeline.
-- 🗄️ [Database Design](docs/database.md) – Table schemas, relationships & caching layout.
-- 🔌 [API Specification](docs/api.md) – REST endpoints & WebSocket protocol details.
-- 👥 [Team Roles & Workflow](docs/roles.md) – Member work distribution & GitHub branch strategy.
-- 🗺️ [Development Roadmap](docs/roadmap.md) – 6-Week milestones & future features.
+## API at a glance
+
+Base URL: `http://localhost:5000/api/v1`
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/health` | Basic process health check |
+| `GET` | `/api/v1/health` | API health and timestamp |
+| `GET` | `/api/v1/events` | Paginated, filterable event feed |
+| `POST` | `/api/v1/events/ingest` | Authenticated collector batch upsert |
+| `GET` | `/api/v1/analytics/overview` | 24-hour event metrics |
+
+See [API documentation](docs/api.md) for query parameters, authentication details, response shapes, and planned endpoints.
+
+## Documentation
+
+- [API](docs/api.md)
+- [Architecture](docs/architecture.md)
+- [Database](docs/database.md)
+- [Roadmap](docs/roadmap.md)
+- [Web app guide](apps/web/README.md)
+- [Git workflow](docs/GIT_WORKFLOW.md)

@@ -1,213 +1,129 @@
-# 🔌 API Documentation
+# API reference
 
-> **Implementation status:** `GET /api/v1/events`, authenticated `POST /api/v1/events/ingest`, and `GET /api/v1/analytics/overview` are implemented. Authentication, event history, and Socket.IO sections below are planned API contracts.
+This page documents the API that currently exists. The service is an Express REST API backed by MongoDB/Mongoose. It does not currently implement user authentication, Redis caching, event history, universal search, AI summaries, or Socket.IO. Those items may be considered future work; examples of them in older planning material are not live endpoints.
 
-## Overview
+## Local setup
 
-**World Pulse** exposes RESTful endpoints for resource management, queries, authentication, and analytics, combined with a **Socket.IO** real-time WebSocket protocol for live event feeds and instant alert delivery.
+The default API port is `5000`. Configure `DATABASE_URL` and `WORLD_PULSE_INGEST_KEY` in `apps/api/.env`; the collector must use the same ingest key in `apps/collectors/.env`. See [the API setup guide](../apps/api/README.md).
 
-Base URL for REST endpoints: `/api/v1`
+Base URL: `http://localhost:5000/api/v1`
 
----
+## Health checks
 
-## 🔐 Authentication Endpoints
+### `GET /health`
 
-### 1. Register New User
-- **Endpoint**: `POST /auth/register`
-- **Auth Required**: None
-- **Request Body**:
-  ```json
-  {
-    "email": "user@example.com",
-    "password": "SecurePassword123!"
-  }
-  ```
-- **Response** (`201 Created`):
-  ```json
-  {
-    "success": true,
-    "message": "User registered successfully",
-    "data": {
-      "user": {
-        "id": "u_12345678",
-        "email": "user@example.com",
-        "role": "USER"
-      },
-      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-    }
-  }
-  ```
+Returns `{ "status": "ok" }` when the HTTP server responds.
 
-### 2. Login User
-- **Endpoint**: `POST /auth/login`
-- **Auth Required**: None
-- **Request Body**:
-  ```json
-  {
-    "email": "user@example.com",
-    "password": "SecurePassword123!"
-  }
-  ```
-- **Response** (`200 OK`):
-  ```json
-  {
-    "success": true,
-    "data": {
-      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-      "user": {
-        "id": "u_12345678",
-        "email": "user@example.com",
-        "role": "USER"
-      }
-    }
-  }
-  ```
+### `GET /api/v1/health`
 
-### 3. Get Current User Profile
-- **Endpoint**: `GET /auth/me`
-- **Auth Required**: `Bearer <JWT_TOKEN>`
-- **Response** (`200 OK`):
-  ```json
-  {
-    "success": true,
-    "data": {
-      "id": "u_12345678",
-      "email": "user@example.com",
-      "role": "USER",
-      "created_at": "2026-07-23T10:00:00.000Z"
-    }
-  }
-  ```
+Returns service identity and current server time:
 
----
-
-## ⚡ Events Endpoints
-
-### 1. Get Paginated Events Stream
-- **Endpoint**: `GET /events`
-- **Auth Required**: Optional
-- **Query Parameters**:
-  - `page` *(number, default: 1)*
-  - `limit` *(number, default: 20, max: 100)*
-  - `source` *(string, optional, e.g. `github`, `usgs`)*
-  - `category` *(string, optional, e.g. `seismic`, `code_push`)*
-  - `minImportance` *(float, optional)*
-  - `country` *(string, optional)*
-  - `sinceHours` *(number, optional; capped at 720)*
-  - `before` *(ISO timestamp, optional)*
-  - `q` *(string, optional; title, description, and source search)*
-- **Response** (`200 OK`):
-  ```json
-  {
-    "success": true,
-    "data": [
-      {
-        "id": "evt_9876543210",
-        "source": "usgs_earthquake",
-        "type": "seismic_activity",
-        "title": "M 5.4 Earthquake - Tokyo, Japan",
-        "category": "natural_disasters",
-        "importance": 8.5,
-        "timestamp": "2026-07-23T11:14:45.000Z",
-        "location": {
-          "country": "Japan",
-          "city": "Tokyo",
-          "lat": 35.6762,
-          "lng": 139.6503
-        }
-      }
-    ],
-    "pagination": {
-      "page": 1,
-      "limit": 20,
-      "total": 1420,
-      "totalPages": 71
-    }
-  }
-  ```
-
-### 2. Ingest a Collector Batch
-- **Endpoint**: `POST /events/ingest`
-- **Auth Required**: `x-world-pulse-ingest-key` matching the API's `WORLD_PULSE_INGEST_KEY`
-- **Request Body**: `{ "events": [ ...WorldEvent ] }` (maximum 500 records)
-- **Behavior**: Idempotently upserts records by `id`; this route is intended for the collector service.
-
-### 3. Get Live Feed (Cached Hot Events)
-- **Endpoint**: `GET /events/live`
-- **Auth Required**: None
-- **Response** (`200 OK`): Returns top 50 recent high-importance events cached in Redis.
-
-### 4. Get Single Event Details
-- **Endpoint**: `GET /events/:id`
-- **Auth Required**: None
-- **Response** (`200 OK`): Detailed event payload including raw metadata.
-
-### 5. Historical Events (Replay Mode)
-- **Endpoint**: `GET /events/history`
-- **Auth Required**: Optional
-- **Query Parameters**: `startTime` *(ISO String)*, `endTime` *(ISO String)*, `stepMinutes` *(number)*.
-
----
-
-## 📊 Analytics & Search Endpoints
-
-### 1. Get Global Event Analytics Overview
-- **Endpoint**: `GET /api/v1/analytics/overview`
-- **Implementation**: Returns 24-hour event totals, category counts, average importance, and sources updated in the last ten minutes.
-- **Response** (`200 OK`):
-  ```json
-  {
-    "success": true,
-    "data": {
-      "totalEvents24h": 45890,
-      "eventsByCategory": {
-        "code_push": 18200,
-        "wiki_edit": 15400,
-        "seismic": 320,
-        "crypto": 8500,
-        "news": 3470
-      },
-      "activeCollectors": 9,
-      "averageImportance": 4.2
-    }
-  }
-  ```
-
-### 2. Universal Search
-- **Endpoint**: `GET /search`
-- **Query Parameters**: `q` *(search term)*, `category` *(optional)*, `from` *(date)*, `to` *(date)*.
-- **Response** (`200 OK`): Matching events and summaries.
-
-### 3. Get AI Insights & Summaries
-- **Endpoint**: `GET /ai/summaries`
-- **Response** (`200 OK`): Summarized trends generated from recent event clusters.
-
----
-
-## 📡 Socket.IO Real-Time Protocol
-
-Clients establish a persistent WebSocket connection to `/socket.io`.
-
-### Connection Handshake
-```js
-import { io } from "socket.io-client";
-const socket = io("http://localhost:4000", {
-  auth: { token: "<JWT_TOKEN>" }
-});
+```json
+{
+  "status": "ok",
+  "service": "world-pulse-api",
+  "timestamp": "2026-10-30T12:00:00.000Z"
+}
 ```
 
-### Server -> Client Events
+## Events feed
 
-| Event Name | Payload | Description |
-| :--- | :--- | :--- |
-| `event:new` | `UnifiedEventObject` | Emitted instantly when a new event passes through the normalization pipeline |
-| `event:alert` | `AlertPayload` | High-importance events (importance >= 8.0) |
-| `stats:update` | `AnalyticsBrief` | Periodic 10-second pulse update of global activity counters |
+### `GET /api/v1/events`
 
-### Client -> Server Events
+Returns events ordered newest first. No user token is required.
 
-| Event Name | Payload | Description |
-| :--- | :--- | :--- |
-| `subscribe:category` | `{ category: "seismic" }` | Filter WebSocket payload stream to a specific category |
-| `unsubscribe:category`| `{ category: "seismic" }` | Remove category filter |
-| `ping` | `{ timestamp: number }` | Heartbeat check |
+| Query parameter | Meaning |
+|---|---|
+| `page` | 1-based page number; defaults to `1` |
+| `limit` | Page size; defaults to `20`, clamped to `1–100` |
+| `source` | Exact source match |
+| `category` | Exact category match |
+| `country` | Exact country match |
+| `sinceHours` | Return events newer than this many hours; positive values capped at 720 |
+| `before` | Return events at or before this valid date/time |
+| `q` | Case-insensitive text match against title, description, or source (first 100 characters) |
+| `minImportance` | Minimum importance score |
+
+Example: `GET /api/v1/events?page=1&limit=20&category=natural&sinceHours=24`
+
+Successful response:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "usgs:example-event",
+      "source": "usgs",
+      "type": "earthquake",
+      "title": "Example earthquake",
+      "description": null,
+      "url": null,
+      "category": "natural",
+      "importance": 5,
+      "timestamp": "2026-10-30T11:00:00.000Z",
+      "location": { "country": null, "region": null, "lat": 35.6, "lng": 139.7 },
+      "tags": [],
+      "metadata": {}
+    }
+  ],
+  "pagination": { "page": 1, "limit": 20, "total": 1, "totalPages": 1 }
+}
+```
+
+The event `location` fields and `description`/`url` may be `null` when unavailable. Database or query failures return HTTP `500` with `{ "success": false, "error": "Failed to fetch events" }`.
+
+## Collector ingestion
+
+### `POST /api/v1/events/ingest`
+
+Accepts up to 500 normalized events per request. Send the shared secret in the `x-world-pulse-ingest-key` header. Records are upserted by event `id`, so repeating an ID updates its stored event.
+
+```http
+POST /api/v1/events/ingest
+Content-Type: application/json
+x-world-pulse-ingest-key: <shared secret>
+```
+
+```json
+{
+  "events": [
+    {
+      "id": "usgs:example-event",
+      "source": "usgs",
+      "type": "earthquake",
+      "category": "natural",
+      "title": "Example earthquake",
+      "timestamp": "2026-10-30T11:00:00.000Z",
+      "importance": 5,
+      "location": { "latitude": 35.6, "longitude": 139.7 }
+    }
+  ]
+}
+```
+
+Each event requires non-empty `id` and `title`, string `source`, `type`, and `category`, a parseable timestamp, and a finite `importance` from 0 to 10. Optional location coordinates must be valid latitude/longitude values. Other optional event fields follow the [`WorldEvent` type](../packages/shared-types/event.ts).
+
+Success response: `{ "success": true, "received": 1, "upserted": 1, "modified": 0 }`. An empty batch succeeds with zero counts. Invalid input or more than 500 records returns HTTP `400`; a missing or incorrect key returns `401`; ingestion without a configured API key returns `503`.
+
+## Analytics overview
+
+### `GET /api/v1/analytics/overview`
+
+Returns metrics calculated from stored events in the previous 24 hours. `activeCollectors` counts distinct sources with records updated in the last 10 minutes; it does not report collector process health.
+
+```json
+{
+  "success": true,
+  "data": {
+    "totalEvents24h": 120,
+    "eventsByCategory": { "natural": 12, "technology": 108 },
+    "activeCollectors": 3,
+    "averageImportance": 4.2
+  }
+}
+```
+
+## Planned API work
+
+The following are not currently available routes or protocols: registration/login/profile, `/events/live`, `/events/:id`, `/events/history`, `/search`, `/ai/summaries`, and Socket.IO streaming. Update this page when those features are implemented.
