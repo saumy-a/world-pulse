@@ -3,6 +3,8 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import eventsRouter from "./routes/events";
+import ingestRouter from "./routes/ingest";
+import analyticsRouter from "./routes/analytics";
 
 const app = express();
 
@@ -13,7 +15,7 @@ app.use(helmet());
 app.use(cors());
 
 // Read JSON sent in request bodies
-app.use(express.json());
+app.use(express.json({ limit: "2mb" }));
 
 // Log every request in the terminal
 app.use(morgan("dev"));
@@ -34,5 +36,7 @@ app.get("/health", (_req, res) => {
 
 // Events API
 app.use("/api/v1/events", eventsRouter);
+app.use("/api/v1/events/ingest", ingestRouter);
+app.use("/api/v1/analytics", analyticsRouter);
 
 export default app;

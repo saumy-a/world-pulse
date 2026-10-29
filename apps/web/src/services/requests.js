@@ -23,7 +23,6 @@ export function createApplicationRequestServices({
     terrain: '/api/terrain/heights',
     regional: '/api/regional-brief',
     weather: '/api/weather-effects',
-    summary: '/api/openai/hud-summary',
     ...endpoints,
   };
   async function request(endpoint, { signal, ...init } = {}) {
@@ -172,16 +171,6 @@ export function createApplicationRequestServices({
           await request(pointUrl(urls.weather, latitude, longitude), options),
           'Weather',
         );
-      },
-    },
-    summary: {
-      async summarize(context, { signal } = {}) {
-        return request(urls.summary, {
-          method: 'POST',
-          signal,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(context),
-        });
       },
     },
   };

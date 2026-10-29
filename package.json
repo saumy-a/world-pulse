@@ -8,7 +8,9 @@
   "scripts": {
     "dev": "npm run dev --workspaces",
     "dev:web": "npm run dev --workspace=apps/web",
+    "dev:api": "npm run dev --workspace=@world-pulse/api",
     "dev:collectors": "npm run dev --workspace=apps/collectors",
+    "seed": "npm run seed --workspace=@world-pulse/api",
     "dev:all": "npm run dev --workspaces",
     "build": "npm run build --workspaces",
     "build:web": "npm run build --workspace=apps/web",

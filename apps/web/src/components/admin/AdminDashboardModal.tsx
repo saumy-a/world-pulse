@@ -151,9 +151,6 @@ export const AdminDashboardModal: FC<AdminDashboardModalProps> = ({ onClose }) =
             <div>
               <h2 className="text-sm font-mono font-bold tracking-widest text-slate-100 uppercase flex items-center gap-2">
                 <span>TACTICAL COMMAND & CONTROL // ADMIN CONSOLE</span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-700">
-                  TOP SECRET // CLEARANCE L5
-                </span>
               </h2>
               <p className="text-xs text-slate-400 font-mono mt-0.5">
                 Role-Based Access Control, Manual Telemetry Injection, and Ingestion Lifecycle

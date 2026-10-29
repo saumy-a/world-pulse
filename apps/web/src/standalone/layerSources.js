@@ -21,6 +21,7 @@ import { createWindSource } from '../layers/wind/source.js';
 import { createFirmsSource } from '../layers/firms/source.js';
 import { createMapillarySource } from '../layers/streetLevel/providers/mapillary/source.js';
 import { createReferenceSources } from '../sources/reference.js';
+import { createWorldPulseEventsSource } from '../layers/worldPulseEvents/source.js';
 export { createReferenceSources as createStandaloneReferenceSources } from '../sources/reference.js';
 
 /** Select standalone providers without starting their acquisition. */
@@ -56,6 +57,7 @@ export function createStandaloneLayerSources(overrides = {}) {
     mapillary: createMapillarySource({
       token: import.meta.env?.MAPILLARY_CLIENT_TOKEN || '',
     }),
+    'world-pulse-events': createWorldPulseEventsSource(),
   };
   for (const name of Object.keys(overrides)) {
     if (!Object.hasOwn(defaults, name))

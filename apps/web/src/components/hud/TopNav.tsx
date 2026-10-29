@@ -12,8 +12,6 @@ import {
   X,
   Shield,
   User,
-  Volume2,
-  VolumeX,
   Bookmark,
 } from 'lucide-react';
 
@@ -54,8 +52,6 @@ export const TopNav: FC<TopNavProps> = ({
   const viewMode = useEventStore((s) => s.viewMode);
   const setViewMode = useEventStore((s) => s.setViewMode);
   const setCameraTarget = useEventStore((s) => s.setCameraTarget);
-  const isSoundMuted = useEventStore((s) => s.isSoundMuted);
-  const toggleSoundMuted = useEventStore((s) => s.toggleSoundMuted);
   const searchQuery = useEventStore((s) => s.filters.searchQuery);
   const setSearchQuery = useEventStore((s) => s.setSearchQuery);
   const [isCopied, setIsCopied] = useState(false);
@@ -148,15 +144,6 @@ export const TopNav: FC<TopNavProps> = ({
 
         <div className="w-[1px] h-5 bg-white/10 mx-1" />
 
-        {/* Sound toggle */}
-        <button
-          type="button"
-          onClick={toggleSoundMuted}
-          className={`top-round-btn ${!isSoundMuted ? 'active' : ''}`}
-          title={isSoundMuted ? 'Unmute Procedural Audio' : 'Mute Procedural Audio'}
-        >
-          {isSoundMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-        </button>
       </nav>
 
       {/* ── 3. Top-Right: Exact Style Indicator & Access HUD ── */}

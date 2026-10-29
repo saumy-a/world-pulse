@@ -1,5 +1,6 @@
 import "dotenv/config";
 import cron from "node-cron";
+import axios from "axios";
 
 import { collect as collectGitHub } from "./collectors/github";
 import { collect as collectUSGS } from "./collectors/usgs";
@@ -41,6 +42,29 @@ const collectors: Collector[] = [
   { name: "hacker-news", collect: collectHackerNews },
 ];
 
+async function publishEvents(events: WorldEvent[]): Promise<void> {
+  if (events.length === 0) return;
+  const apiUrl = process.env.WORLD_PULSE_API_URL ?? "http://localhost:5000";
+  const apiBaseUrl = apiUrl.endsWith("/") ? apiUrl.slice(0, -1) : apiUrl;
+  const ingestKey = process.env.WORLD_PULSE_INGEST_KEY;
+  if (!ingestKey) {
+    log.warn("WORLD_PULSE_INGEST_KEY is unset; collected events were not saved");
+    return;
+  }
+  for (let offset = 0; offset < events.length; offset += 500) {
+    const batch = events.slice(offset, offset + 500);
+    const response = await axios.post(
+      `${apiBaseUrl}/api/v1/events/ingest`,
+      { events: batch },
+      {
+        headers: { "x-world-pulse-ingest-key": ingestKey },
+        timeout: 15_000,
+      },
+    );
+    log.info(`Saved ${response.data?.received ?? batch.length} event(s) to the API`);
+  }
+}
+
 // ─── Run all collectors ───────────────────────────────────────────────────────
 
 async function runAllCollectors(): Promise<void> {
@@ -55,12 +79,20 @@ async function runAllCollectors(): Promise<void> {
   );
 
   let totalEvents = 0;
+  const collectedEvents: WorldEvent[] = [];
   for (const result of results) {
     if (result.status === "fulfilled") {
       totalEvents += result.value.events.length;
+      collectedEvents.push(...result.value.events);
     } else {
       log.error("Collector failed", result.reason);
     }
+  }
+
+  try {
+    await publishEvents(collectedEvents);
+  } catch (error) {
+    log.error("Failed to publish collected events to the API", error);
   }
 
   log.info(`Collection cycle complete. Total events: ${totalEvents}`);

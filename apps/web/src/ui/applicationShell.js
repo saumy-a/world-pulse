@@ -73,7 +73,7 @@ export class StyleManager extends ShellFacade {
    */
   constructor(
     viewer,
-    { mapStackController = null, placeSearch, services, requestServices } = {},
+    { mapStackController = null, placeSearch, services } = {},
   ) {
     super();
     const {
@@ -355,10 +355,7 @@ export class StyleManager extends ShellFacade {
     this._lastTrafficChipUpdateAt = 0;
 
     // Intel HUD
-    this.hud = new IntelHUD(viewer, {
-      placeSearch,
-      summaryService: requestServices?.summary,
-    });
+    this.hud = new IntelHUD(viewer);
     this._recording.hud = this.hud;
     this._cockpitCoordinator = new CockpitCoordinator({
       viewer,

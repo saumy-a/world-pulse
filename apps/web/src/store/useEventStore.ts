@@ -1,13 +1,6 @@
 import { create } from 'zustand';
 import type { WorldEvent } from '../types';
 import { INITIAL_MOCK_EVENTS } from '../services/mockEvents';
-import {
-  playHoverBlip,
-  playNewIncidentSound,
-  playCriticalAlertSound,
-  playTargetLockSound,
-  setSoundMuted,
-} from '../services/sound';
 
 export interface FilterState {
   searchQuery: string;
@@ -33,9 +26,6 @@ interface EventStoreState {
   // Theme Accent
   themeAccent: ThemeAccent;
 
-  // Sound
-  isSoundMuted: boolean;
-
   // Filters
   filters: FilterState;
 
@@ -59,7 +49,6 @@ interface EventStoreState {
   setViewMode: (mode: '3d' | '2d') => void;
   toggleLayer: (layerId: string) => void;
   setThemeAccent: (accent: ThemeAccent) => void;
-  toggleSoundMuted: () => void;
 
   setSearchQuery: (query: string) => void;
   toggleCategory: (category: string) => void;
@@ -93,7 +82,6 @@ export const useEventStore = create<EventStoreState>((set) => ({
 
   viewMode: '3d',
   themeAccent: 'cyan',
-  isSoundMuted: false,
 
   filters: {
     searchQuery: '',
@@ -114,15 +102,6 @@ export const useEventStore = create<EventStoreState>((set) => ({
     set((state) => {
       if (state.events.some((e) => e.id === event.id)) return state;
 
-      // Audio feedback
-      if (!state.isSoundMuted) {
-        if (event.importance >= 7.5) {
-          playCriticalAlertSound();
-        } else {
-          playNewIncidentSound();
-        }
-      }
-
       const updated = [event, ...state.events].slice(0, 300);
       return { events: updated };
     }),
@@ -136,16 +115,10 @@ export const useEventStore = create<EventStoreState>((set) => ({
     }),
 
   setSelectedEvent: (selectedEvent) => {
-    if (selectedEvent) {
-      playTargetLockSound();
-    }
     set({ selectedEvent });
   },
 
   setHoveredEvent: (hoveredEvent) => {
-    if (hoveredEvent) {
-      playHoverBlip();
-    }
     set({ hoveredEvent });
   },
 
@@ -162,13 +135,6 @@ export const useEventStore = create<EventStoreState>((set) => ({
     })),
 
   setThemeAccent: (themeAccent) => set({ themeAccent }),
-
-  toggleSoundMuted: () =>
-    set((state) => {
-      const next = !state.isSoundMuted;
-      setSoundMuted(next);
-      return { isSoundMuted: next };
-    }),
 
   setSearchQuery: (searchQuery) =>
     set((state) => ({

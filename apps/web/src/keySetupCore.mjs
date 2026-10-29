@@ -58,22 +58,6 @@ export const KEY_SETUP_KEYS = Object.freeze([
     hidden: true,
   }),
   Object.freeze({
-    id: 'openai',
-    title: 'OPENAI', // i18n-ignore: provider product name
-    unlocks: msg('Voice control — API key or ChatGPT OAuth'),
-    getUrl: 'https://platform.openai.com/api-keys',
-    envVars: Object.freeze(['OPENAI_API_KEY']),
-    tier: 'metered',
-  }),
-  Object.freeze({
-    id: 'gemini',
-    title: 'GEMINI', // i18n-ignore: provider product name
-    unlocks: msg('Gemini Live voice control'),
-    getUrl: 'https://aistudio.google.com/apikey',
-    envVars: Object.freeze(['GEMINI_API_KEY']),
-    tier: 'metered',
-  }),
-  Object.freeze({
     id: 'aisstream',
     title: 'AISSTREAM', // i18n-ignore: provider product name
     unlocks: msg('Live ships, worldwide'),

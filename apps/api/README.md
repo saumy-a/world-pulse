@@ -13,6 +13,7 @@ Backend for World Pulse (Express + TypeScript + MongoDB with Mongoose).
 |---|---|
 | `PORT` | Port the API listens on (default 5000) |
 | `DATABASE_URL` | MongoDB connection string (MongoDB Atlas) |
+| `WORLD_PULSE_INGEST_KEY` | Shared secret required by the collector event-ingest route |
 | `REDIS_URL` | Planned for later, not used yet |
 | `JWT_SECRET` | Planned for authentication, not used yet |
 
@@ -29,6 +30,9 @@ Backend for World Pulse (Express + TypeScript + MongoDB with Mongoose).
 
 - `GET /health` returns `{ "status": "ok" }`
 - `GET /api/v1/health` returns service status and a timestamp
+- `GET /api/v1/events` returns the paginated event feed
+- `POST /api/v1/events/ingest` accepts authenticated collector batches
+- `GET /api/v1/analytics/overview` returns 24-hour event metrics
 
 ## Database note
 

@@ -28,11 +28,31 @@
     left: 20px;
   }
 
+  #hud-minimal-readout {
+    top: 58px;
+    left: 16px;
+    gap: 5px;
+    max-width: calc(100vw - 32px);
+    padding: 4px 7px;
+    font-size: 9px;
+  }
+
   #top-center-actions {
     top: max(12px, env(safe-area-inset-top));
     right: 16px;
     left: auto;
+    gap: 4px;
     transform: none;
+  }
+
+  #top-center-actions .quick-panel-toggle {
+    width: 36px;
+    min-width: 36px;
+    padding: 0;
+  }
+
+  #top-center-actions .quick-panel-toggle > span:last-child {
+    display: none;
   }
 
   #style-indicator {

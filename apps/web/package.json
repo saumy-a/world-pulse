@@ -2,7 +2,7 @@
   "name": "gods-eye-view",
   "private": true,
   "version": "0.2.1",
-  "description": "A real-time intelligence console for planet Earth — photorealistic 3D globe, live aircraft/ships/satellites/earthquakes/CCTV, and hands-free voice control. Runs in a browser.",
+  "description": "A real-time intelligence console for planet Earth — photorealistic 3D globe, live aircraft/ships/satellites/earthquakes/CCTV. Runs in a browser.",
   "type": "module",
   "license": "MIT",
   "author": "Bilawal Sidhu",
@@ -27,8 +27,6 @@
     "adsb",
     "ais",
     "satellites",
-    "voice-control",
-    "openai-realtime",
     "visualization"
   ],
   "scripts": {
@@ -127,9 +125,6 @@
     "./server/providers/regional": {
       "node": "./server/providers/regional.js"
     },
-    "./server/providers/openai": {
-      "node": "./server/providers/openai.js"
-    },
     "./server/standalone/key-setup": {
       "node": "./server/standalone/key-setup.js"
     },
@@ -192,11 +187,6 @@
     "./maps/terrain": "./src/maps/terrain.js",
     "./maps/3d": "./src/maps/google3d.js",
     "./maps/defaults": "./src/maps/defaultSources.js",
-    "./voice/controller": "./src/voice/realtimeController.js",
-    "./voice/control": "./src/voice/control.js",
-    "./voice/realtime-backend": "./src/voice/realtimeBackend.js",
-    "./voice/commands": "./src/voice/commands.js",
-    "./voice/cost": "./src/voice/voiceCost.js",
     "./application/scene": "./src/app/scene.js",
     "./application/controls": "./src/app/controls.js",
     "./application/data": "./src/app/data.js",
@@ -209,7 +199,6 @@
     "./ui/composition": "./src/ui/composition.js",
     "./ui/hud": "./src/hud.js",
     "./standalone/settings": "./src/keySetup.js",
-    "./voice/actions": "./src/voice/gevActions.js",
     "./annotations": "./src/annotations/index.js",
     "./context": "./src/data/contextStore.js",
     "./build/html": {
@@ -230,13 +219,8 @@
     "./layers/military/ingestion": "./src/layers/military/ingestion.js",
     "./layers/vessels/records": "./src/layers/vessels/records.js",
     "./layers/vessels/ingestion": "./src/layers/vessels/ingestion.js",
-    "./sources/radio-browser": "./src/sources/radioBrowser.js",
     "./sources/cctv-types": "./src/sources/cctvTypes.js",
     "./sources/regional": "./src/data/regionalModel.js",
-    "./voice/action-schemas": "./src/voice/actionSchemas.js",
-    "./voice/session": "./src/voice/session.js",
-    "./voice/session-controls": "./src/voice/sessionCommands.js",
-    "./voice/realtime-session": "./src/voice/realtimeSession.js",
     "./layers/alpr/source": "./src/layers/alpr/source.js",
     "./layers/bikeshare/source": "./src/layers/bikeshare/source.js",
     "./layers/cctv/source": "./src/layers/cctv/source.js",
@@ -264,6 +248,7 @@
     "./layers/transit/standalone": "./src/data/transit.js",
     "./layers/transit/source": "./src/layers/transit/source.js",
     "./sources/transit-service": "./src/sources/transitService.js",
+    "./sources/radio-browser": "./src/sources/radioBrowser.js",
     "./sources/map-features": "./src/sources/overpassFeatures.js",
     "./server/providers/mapillary": {
       "node": "./server/providers/mapillary.js"

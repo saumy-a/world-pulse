@@ -53,6 +53,29 @@
   font-size: 18px;
 }
 
+#top-center-actions .quick-panel-toggle {
+  width: auto;
+  min-width: 86px;
+  height: 36px;
+  padding: 0 10px;
+  gap: 6px;
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+}
+
+#top-center-actions .quick-panel-toggle .material-symbols-outlined {
+  color: var(--accent);
+}
+
+/* Voice command controls are not part of the World Pulse interface. */
+#gev-voice-control {
+  display: none !important;
+}
+
 #tilt-map-view[aria-pressed='true'] {
   border-color: var(--accent);
   color: var(--accent);

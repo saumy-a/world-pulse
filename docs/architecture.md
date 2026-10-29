@@ -1,5 +1,7 @@
 # 🏗️ System Architecture
 
+> **Implementation status:** This document describes the target architecture. The current system uses scheduled collectors, an Express REST API, MongoDB/Mongoose, and a Cesium-based web app. Authentication, Redis, analytics, and Socket.IO are planned.
+
 ## Overview
 
 **World Pulse (Internet Pulse Engine)** is designed as a distributed, high-throughput, real-time event processing and visualization system. The system ingests public web events from heterogeneous data sources, normalizes them into a unified data structure, enriches them with spatial and importance metadata, and broadcasts updates live to web clients using WebSockets.

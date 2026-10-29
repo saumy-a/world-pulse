@@ -2,6 +2,8 @@
 
 ## Overview
 
+> **Implementation status:** The current API uses MongoDB with Mongoose for the `Event` collection. This PostgreSQL/Redis schema is a future design proposal, not the active database schema.
+
 **World Pulse** utilizes PostgreSQL as its primary relational database management system, accessed through **Prisma ORM**, and **Redis (Upstash)** as an in-memory caching and message pub/sub tier.
 
 ---

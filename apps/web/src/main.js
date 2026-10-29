@@ -1,6 +1,7 @@
 import { createStandaloneApplication } from './standalone/application.js';
 import { describeError } from './standalone/errors.js';
 import { t } from './i18n/index.js';
+import { mountWorldPulseEventsPanel } from './ui/worldPulseEventsPanel.js';
 
 const application = createStandaloneApplication({
   googleApiKey: import.meta.env.GOOGLE_MAPS_API_KEY,
@@ -8,8 +9,14 @@ const application = createStandaloneApplication({
   allowQaRegistration: import.meta.env.DEV,
 });
 
-application.start().catch((error) => {
-  console.error("God's Eye View initialization failed:", error);
+application.start().then((components) => {
+  mountWorldPulseEventsPanel({
+    dataManager: components.data.dataManager,
+    catalog: components.data.catalog,
+    viewer: components.scene.viewer,
+  });
+}).catch((error) => {
+  console.error('World Pulse initialization failed:', error);
   const loaderStatus = document.querySelector('#loading-screen .loader-status');
   loaderStatus.textContent = t('Error: {message}', {
     message: describeError(error),

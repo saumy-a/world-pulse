@@ -2,60 +2,37 @@
 
 > **Tagline:** Watch the world's digital and real-world events in real time.
 
-**World Pulse** (Internet Pulse Engine / IPE) is a full-stack real-time global event aggregation and visualization platform. Built as an Advanced Web Technology (AWT) semester project, it continuously ingests live event data from multiple public web APIs (GitHub, Wikipedia, USGS earthquakes, NASA, CoinGecko, weather, news feeds, etc.), normalizes the stream into a unified data schema, enriches events with geolocation and importance metrics, and streams updates to clients via WebSockets for real-time visualization on an interactive 3D globe and analytical dashboard.
+**World Pulse** is a real-time global event aggregation and visualization platform. It collects public data, normalizes records into a shared event schema, stores them in MongoDB, and displays geolocated events on the interactive globe in `apps/web`. The globe app is based on the MIT-licensed God's Eye View project; its license is retained in `apps/web/LICENSE`.
 
 ---
 
 ## 🎯 Core Features
 
-- 🌐 **Interactive 3D Globe**: Render live global events visually on a 3D Earth model built with React Three Fiber (Three.js).
-- ⚡ **Real-Time Event Feed**: High-throughput event streaming via Socket.IO for instant client updates.
-- 🐙 **GitHub Activity Monitor**: Real-time tracking of public repository pushes, pull requests, and releases.
-- 📝 **Wikimedia Edit Stream**: Live edit stream monitoring across Wikipedia global languages.
-- 🌋 **Earthquake & Weather Alerts**: USGS seismic GeoJSON feed ingestion combined with Open-Meteo weather data.
-- 📈 **Crypto & Financial Dashboard**: Ingestion of CoinGecko market ticks and economic events.
-- 🤖 **AI Insights & Summaries**: Smart event clustering and automated activity summaries.
-- 🔍 **Advanced Search & Filtering**: Multi-attribute filtering (source, category, country, importance, date range).
-- ⏪ **Event Replay Timeline**: Historical playback mode to scrub through past digital & physical incidents.
-- 🔐 **Authentication & Roles**: Secure JWT-based User Authentication and Admin Dashboard control.
-- 🌗 **Dark Mode & Responsive UI**: Fluid, modern interface supporting mobile, tablet, and desktop views.
+- 🌐 **Interactive 3D Globe**: Explore event markers alongside God's Eye View's existing globe and geospatial layers.
+- ⚡ **Live Event Feed**: Search, filter by category and importance, bookmark events, and fly the globe to a selected event.
+- 🛰️ **Multiple Collectors**: GitHub, Wikimedia, USGS, NASA, CoinGecko, news, weather, launches, and Hacker News sources.
+- 🎯 **Geolocated Event Markers**: Category-colored, importance-scaled records on the inherited 3D globe.
+- 🔍 **Live Feed Controls**: Search, category and importance filters, browser-saved bookmarks, and source links.
+- 🧭 **Globe + Live Layers**: World Pulse events work alongside God's Eye View's aircraft, satellite, weather, and camera layers.
+- 📊 **Basic Analytics + Replay**: 24-hour source/category metrics and a 24-hour/7-day/30-day event timeline scrubber.
+- 🧪 **In Progress**: Advanced analytics, AI briefs, notifications, authentication, and admin workflows remain planned; prototype React components are not yet wired into the active globe app.
 
 ---
 
 ## 🏗️ Architecture Overview
 
 ```
-                         +-----------------------------------+
-                         |      React Frontend (Vite)        |
-                         |  (Dashboard, 3D Globe, Analytics) |
-                         +-----------------+-----------------+
-                                           |
-                                  REST / Socket.IO
-                                           |
-                         +-----------------v-----------------+
-                         |       Express API Gateway         |
-                         |  (Auth | Events API | Analytics)  |
-                         +-----------------+-----------------+
-                                           |
-                         +-----------------v-----------------+
-                         |      Event Processing Layer       |
-                         |  (Normalize -> Geo -> Importance) |
-                         +--------+-----------------+--------+
-                                  |                 |
-                         +--------v-------+ +-------v--------+
-                         | PostgreSQL DB  | |  Redis Cache   |
-                         |  (Prisma ORM)  | |  (Upstash)     |
-                         +----------------+ +----------------+
-                                           ^
-                                           | Event Ingestion
-                         +-----------------+-----------------+
-                         |        Collector Services         |
-                         +-----------------+-----------------+
-                                           |
-     +---------+----------+----------+-----+-----+-----------+----------+
-     |         |          |          |           |           |          |
-  GitHub   Wikimedia     USGS    CoinGecko     NASA     News/RSS    Open-Meteo
-  Events  EventStreams Earthquake   Market     APIs       Feeds      Weather
+External feeds
+     │
+     ▼
+Collectors → Normalize → Authenticated REST ingest
+                               │
+                               ▼
+                    Express Events API ───► MongoDB
+                               ▲
+                               │ REST feed + analytics
+                               │
+                 World Pulse / God's Eye View globe
 ```
 
 ---
@@ -64,16 +41,15 @@
 
 | Layer | Technology |
 | :--- | :--- |
-| **Frontend Framework** | React, TypeScript, Vite |
-| **Styling & UI** | Tailwind CSS, Framer Motion |
-| **3D & Visualization** | React Three Fiber (Three.js), D3.js |
-| **State & Data Fetching** | Zustand, TanStack Query (React Query) |
-| **Real-time Client** | Socket.IO Client |
+| **Frontend** | Vite, JavaScript, CesiumJS (God's Eye View base) |
+| **Styling & UI** | Existing God's Eye View UI and CSS system |
+| **3D & Visualization** | CesiumJS |
+| **Data Fetching** | REST polling |
 | **Backend API** | Node.js, Express.js, TypeScript |
-| **Database & ORM** | PostgreSQL, Prisma ORM |
-| **Cache & Queue** | Redis (Upstash), BullMQ, node-cron |
-| **Auth** | JSON Web Tokens (JWT) |
-| **Deployment** | Vercel (Frontend), Railway/Render (Backend), Neon PostgreSQL, Upstash Redis |
+| **Database & ORM** | MongoDB, Mongoose |
+| **Scheduling** | node-cron |
+| **Cache & Auth** | Planned |
+| **Deployment** | Vercel (Frontend), Railway/Render (Backend), MongoDB |
 | **DevOps & CI/CD** | Docker, GitHub Actions |
 
 ---
@@ -83,20 +59,19 @@
 ```text
 world-pulse/
 ├── apps/
-│   ├── web/               # React frontend application (Dashboard, 3D Globe, Charts)
-│   ├── api/               # Express REST API & Socket.IO server engine
+│   ├── web/               # Vite/Cesium globe app with World Pulse event feed
+│   ├── api/               # Express REST API backed by MongoDB/Mongoose
 │   └── collectors/        # Microservices for fetching and normalizing external APIs
 ├── packages/
 │   ├── shared-types/      # Common TypeScript interfaces & event schemas
-│   ├── shared-api/        # Shared API fetchers and HTTP client utilities
-│   └── shared-ui/         # Shared design components & UI tokens
+│   └── shared-utils/      # Shared normalization and event utilities
 ├── docs/                  # Project documentation
 │   ├── api.md             # REST & Socket.IO API specification
 │   ├── architecture.md    # System architecture & processing pipeline
-│   ├── database.md        # PostgreSQL database schema & Redis strategy
+│   ├── database.md        # Current MongoDB implementation and future design
 │   ├── roadmap.md         # 6-Week development timeline & phase milestones
 │   └── roles.md           # Team member roles & GitHub workflow
-├── docker/                # Docker compose & container definitions
+├── docker-compose.yml     # Local service orchestration
 └── .github/               # GitHub Actions CI/CD workflows
 ```
 
@@ -129,35 +104,21 @@ world-pulse/
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js (v18+) & `npm` / `pnpm`
-- PostgreSQL & Redis (local or cloud instances like Neon & Upstash)
-- Docker (optional)
+- Node.js 24.14+ or 26.x for the web workspace, `npm`, and a MongoDB database
+- Docker is optional
 
 ### Setup Instructions
 
-1. **Clone repository**:
+1. Install the workspace dependencies with `npm install`.
+2. Copy `apps/api/.env.example`, `apps/collectors/.env.example`, and `apps/web/.env.example` to matching `.env` files.
+3. Set `DATABASE_URL` in `apps/api/.env`. Set the same long random `WORLD_PULSE_INGEST_KEY` in the API and collector `.env` files.
+4. Start the API, collectors, and globe in separate terminals:
    ```bash
-   git clone https://github.com/your-org/world-pulse.git
-   cd world-pulse
+   npm run dev:api
+   npm run dev:collectors
+   npm run dev:web
    ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Set Environment Variables**:
-   Copy `.env.example` to `.env` in `apps/api` and `apps/web` and populate database URIs and API keys.
-
-4. **Run Database Migrations**:
-   ```bash
-   npx prisma migrate dev
-   ```
-
-5. **Start Development Servers**:
-   ```bash
-   npm run dev
-   ```
+5. Open the Vite URL shown in the web terminal. The World Pulse Events panel can load stored events; `npm run seed` inserts sample records for a first look.
 
 ---
 

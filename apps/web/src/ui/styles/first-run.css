@@ -243,6 +243,10 @@
   line-height: 1.35;
 }
 
+.first-run-note:empty {
+  display: none;
+}
+
 #first-run-launcher[data-state='loading'] .first-run-note {
   color: rgba(54, 220, 255, 0.85);
 }

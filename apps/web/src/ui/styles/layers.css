@@ -1,5 +1,6 @@
 /* ── Data Layer Toggle Panel ─────────────────── */
 #left-panel-stack {
+  --left-collapsed-width: 148px;
   position: fixed;
   top: var(--left-stack-safe-top, var(--left-stack-top));
   bottom: var(--left-stack-safe-bottom, 4vh);
@@ -9,7 +10,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 5px;
   pointer-events: none;
   transition:
     top var(--transition-fast),
@@ -143,6 +144,7 @@
   min-height: 0;
 }
 #right-context-rail {
+  --left-collapsed-width: 148px;
   --right-display-collapsed-width: var(--left-collapsed-width);
   --right-context-collapsed-width: var(--left-collapsed-width);
   position: fixed;

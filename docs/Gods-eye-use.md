@@ -2,17 +2,25 @@
 ## God's Eye View Base Integration Plan
 
 **Project:** World Pulse — Real-Time Global Event Intelligence & Visualization Platform  
-**Purpose:** Define how the existing God's Eye View project will be used as a foundation for World Pulse.
+**Purpose:** Track how the MIT-licensed God's Eye View application in `apps/web` is being integrated with World Pulse's event pipeline and product features.
+
+> The sections below preserve the original target architecture and feature plan. Advanced analytics, AI briefings, user authentication, and Socket.IO are not implemented yet; the current shipped integration is summarized here.
+
+## Current integration
+
+- The inherited globe and data layers run from `apps/web`.
+- The **World Pulse Events** layer reads geolocated records from `GET /api/v1/events` and adds category-colored markers to that globe.
+- The live feed panel supports text, category, minimum-importance, and saved-event filters. Bookmarks persist in the browser; selecting a row flies to its marker.
+- The feed includes a replay time window (24 hours, 7 days, or 30 days) and a timeline scrubber; the API overview contributes 24-hour event and collector metrics.
+- Collectors now send normalized batches to the authenticated API ingestion route, which upserts them into MongoDB.
+- Set `DATABASE_URL` and `WORLD_PULSE_INGEST_KEY` in `apps/api/.env`; use the same ingest key in `apps/collectors/.env`. Set `VITE_WORLD_PULSE_API_URL` in `apps/web/.env` when the API is not at `http://localhost:5000`.
+- Start the services with `npm run dev:api`, `npm run dev:collectors`, and `npm run dev:web`. Run `npm run seed` once if you want sample events before the next collection cycle.
 
 ---
 
 # 1. Objective
 
-World Pulse will use the **God's Eye View** project as a reference/base for the **3D globe and geographic visualization layer**.
-
-We will **not simply copy, rename, or submit God's Eye View as our project**.
-
-Instead, we will use its existing visualization concepts/components where technically and legally appropriate, and build our own:
+The repository already includes the God's Eye View application in `apps/web`, including its globe, UI, and existing data layers. Its MIT license and attribution are retained. World Pulse adds its own:
 
 - Event aggregation system
 - Data collectors
@@ -27,7 +35,7 @@ Instead, we will use its existing visualization concepts/components where techni
 - Notifications
 - Project documentation
 
-The goal is to transform a globe visualization into a complete **real-time global event intelligence platform**.
+The goal is to combine the mature globe experience with World Pulse's own real-time event intelligence platform.
 
 ---
 
@@ -160,9 +168,9 @@ Example:
 
 ---
 
-# 5. What We Will NOT Reuse Directly
+# 5. Product and Code Boundaries
 
-We should not blindly copy the entire God's Eye View project.
+The existing application remains the globe, camera, and geospatial layer foundation. World Pulse owns the event pipeline and event-focused product features. The integration should keep these boundaries clear:
 
 World Pulse will have its own:
 
@@ -209,7 +217,7 @@ The project should remain architecturally understandable as **our own system**.
                               │
                 ┌─────────────┴─────────────┐
                 ↓                           ↓
-          PostgreSQL                      Redis
+          MongoDB                    (future cache)
                 │                           │
                 └─────────────┬─────────────┘
                               ↓

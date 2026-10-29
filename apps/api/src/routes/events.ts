@@ -21,6 +21,28 @@ router.get("/", async (req, res) => {
     if (typeof req.query.category === "string") filter.category = req.query.category;
     if (typeof req.query.country === "string") filter.country = req.query.country;
 
+    const timeFilter: Record<string, Date> = {};
+    if (typeof req.query.sinceHours === "string") {
+      const hours = Number(req.query.sinceHours);
+      if (Number.isFinite(hours) && hours > 0) {
+        timeFilter.$gte = new Date(Date.now() - Math.min(hours, 24 * 30) * 60 * 60 * 1000);
+      }
+    }
+    if (typeof req.query.before === "string") {
+      const before = new Date(req.query.before);
+      if (!Number.isNaN(before.getTime())) timeFilter.$lte = before;
+    }
+    if (Object.keys(timeFilter).length) filter.timestamp = timeFilter;
+
+    if (typeof req.query.q === "string" && req.query.q.trim()) {
+      const term = req.query.q.trim().slice(0, 100).replace(/[|\\{}()[\]^$+*?.-]/g, "\\$&");
+      filter.$or = [
+        { title: { $regex: term, $options: "i" } },
+        { description: { $regex: term, $options: "i" } },
+        { source: { $regex: term, $options: "i" } },
+      ];
+    }
+
     if (typeof req.query.minImportance === "string") {
       const min = parseFloat(req.query.minImportance);
       if (!Number.isNaN(min)) filter.importance = { $gte: min };
@@ -43,11 +65,13 @@ router.get("/", async (req, res) => {
       type: event.type,
       title: event.title,
       description: event.description ?? null,
+      url: event.url ?? null,
       category: event.category,
       importance: event.importance,
       timestamp: event.timestamp.toISOString(),
       location: {
         country: event.country ?? null,
+        region: event.region ?? null,
         lat: event.location?.latitude ?? null,
         lng: event.location?.longitude ?? null,
       },

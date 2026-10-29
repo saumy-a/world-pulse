@@ -33,13 +33,15 @@ import { createInfrastructureLayers } from '../data/infrastructure.js';
 import { localGeoJsonServices } from './localGeojsonServices.js';
 import { createBhoteKoshiEventLayer } from '../data/bhoteKoshiEvent.js';
 import { createBhoteKoshiLocatorLayer } from '../data/bhoteKoshiLocator.js';
+import { createApplicationWorldPulseEvents } from './layers/worldPulseEvents.js';
 
 /**
- * Hardware-local layers are registered like any other but never enter share
- * links or stored layer state: another browser cannot have this receiver.
+ * Local/session data layers are registered like any other but never enter
+ * share links or stored state: each browser owns its receiver or live feed.
  */
 export const LOCAL_ONLY_LAYER_METADATA = Object.freeze([
   Object.freeze({ id: 'local-adsb', disposition: 'local-only' }),
+  Object.freeze({ id: 'world-pulse-events', disposition: 'local-only' }),
 ]);
 
 /** Serialization metadata for every layer the application catalog constructs. */
@@ -119,6 +121,9 @@ export function createApplicationCatalog({
           ...(resolveAsset ? { resolveAsset } : {}),
         }),
         createApplicationEarthquakes({ source: sources.earthquakes }),
+        createApplicationWorldPulseEvents({
+          source: sources['world-pulse-events'],
+        }),
         createApplicationAirQuality({ source: sources['air-quality'] }),
         createApplicationFirePerimeters({
           source: sources['fire-perimeters'],

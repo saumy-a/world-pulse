@@ -1,5 +1,7 @@
 # 🔌 API Documentation
 
+> **Implementation status:** `GET /api/v1/events`, authenticated `POST /api/v1/events/ingest`, and `GET /api/v1/analytics/overview` are implemented. Authentication, event history, and Socket.IO sections below are planned API contracts.
+
 ## Overview
 
 **World Pulse** exposes RESTful endpoints for resource management, queries, authentication, and analytics, combined with a **Socket.IO** real-time WebSocket protocol for live event feeds and instant alert delivery.
@@ -91,6 +93,9 @@ Base URL for REST endpoints: `/api/v1`
   - `category` *(string, optional, e.g. `seismic`, `code_push`)*
   - `minImportance` *(float, optional)*
   - `country` *(string, optional)*
+  - `sinceHours` *(number, optional; capped at 720)*
+  - `before` *(ISO timestamp, optional)*
+  - `q` *(string, optional; title, description, and source search)*
 - **Response** (`200 OK`):
   ```json
   {
@@ -121,17 +126,23 @@ Base URL for REST endpoints: `/api/v1`
   }
   ```
 
-### 2. Get Live Feed (Cached Hot Events)
+### 2. Ingest a Collector Batch
+- **Endpoint**: `POST /events/ingest`
+- **Auth Required**: `x-world-pulse-ingest-key` matching the API's `WORLD_PULSE_INGEST_KEY`
+- **Request Body**: `{ "events": [ ...WorldEvent ] }` (maximum 500 records)
+- **Behavior**: Idempotently upserts records by `id`; this route is intended for the collector service.
+
+### 3. Get Live Feed (Cached Hot Events)
 - **Endpoint**: `GET /events/live`
 - **Auth Required**: None
 - **Response** (`200 OK`): Returns top 50 recent high-importance events cached in Redis.
 
-### 3. Get Single Event Details
+### 4. Get Single Event Details
 - **Endpoint**: `GET /events/:id`
 - **Auth Required**: None
 - **Response** (`200 OK`): Detailed event payload including raw metadata.
 
-### 4. Historical Events (Replay Mode)
+### 5. Historical Events (Replay Mode)
 - **Endpoint**: `GET /events/history`
 - **Auth Required**: Optional
 - **Query Parameters**: `startTime` *(ISO String)*, `endTime` *(ISO String)*, `stepMinutes` *(number)*.
@@ -141,7 +152,8 @@ Base URL for REST endpoints: `/api/v1`
 ## 📊 Analytics & Search Endpoints
 
 ### 1. Get Global Event Analytics Overview
-- **Endpoint**: `GET /analytics/overview`
+- **Endpoint**: `GET /api/v1/analytics/overview`
+- **Implementation**: Returns 24-hour event totals, category counts, average importance, and sources updated in the last ten minutes.
 - **Response** (`200 OK`):
   ```json
   {
