@@ -1,5 +1,4 @@
 # World Pulse API
-
 Backend for World Pulse (Express + TypeScript + MongoDB with Mongoose).
 
 ## Setup

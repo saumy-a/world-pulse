@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: world-pulse-web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - world-pulse-net
+
+networks:
+  world-pulse-net:
+    driver: bridge
